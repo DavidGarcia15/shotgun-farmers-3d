@@ -1,20 +1,17 @@
 import * as THREE from "three";
 
-// Seeds land on the soil, grow a plant and release a brief pollen cloud.
-// The cloud gently fills nearby farmers' transformation bars; it never
-// collides with or damages characters.
+// A nonviolent farm loop: collect botanical supplies, hold a plant, sow a seed,
+// and let its brief pollen cloud help nearby farmers become animal companions.
 
 const palette = {
   corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239,
   leaf: 0x5d9149, leafLight: 0x8fb85c, stem: 0x48753c,
 };
-
 const descriptions = {
-  corn: { name: "MILHO", ability: "PÓLEN LEVE", detail: "Nuvem curta; preenche um pouco da barra." },
-  sunflower: { name: "GIRASSOL", ability: "PÓLEN VIVO", detail: "Nuvem média; preenche mais a barra." },
-  pumpkin: { name: "ABÓBORA", ability: "PÓLEN FORTE", detail: "Nuvem mais potente, mas demora mais para lançar." },
+  corn: { name: "MILHO", ability: "PÓLEN LEVE", detail: "Nuvem curta; preenche um pouco da barra.", strength: "18%" },
+  sunflower: { name: "GIRASSOL", ability: "PÓLEN VIVO", detail: "Nuvem média; preenche mais a barra.", strength: "32%" },
+  pumpkin: { name: "ABÓBORA", ability: "PÓLEN FORTE", detail: "Nuvem potente; semeadura mais lenta.", strength: "48%" },
 };
-
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
 
 function addPart(root, geometry, material, position, scale = [1, 1, 1], rotation = [0, 0, 0]) {
@@ -58,10 +55,38 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
   const ability = document.querySelector("#seed-ability");
   const detail = document.querySelector("#seed-detail");
   const plantCountLabel = document.querySelector("#plant-count");
+  const stockLabel = document.querySelector("#seed-stock");
   const plants = [];
   const seeds = [];
+  const pickups = [];
+  const inventory = { corn: 5, sunflower: 3, pumpkin: 2 };
   let selected = "corn";
   let seedCooldown = 0;
+  let handMotion = 0;
+  let elapsed = 0;
+
+  // First-person botanical item and a simple gardening glove, attached to the camera.
+  const heldRoot = new THREE.Group();
+  const sleeve = addPart(heldRoot, new THREE.CylinderGeometry(0.13, 0.17, 0.42, 8), mat(0x557c54), [0.02, -0.27, 0.13], [1, 1, 0.85], [0.2, 0, -0.22]);
+  const glove = addPart(heldRoot, new THREE.SphereGeometry(0.17, 9, 7), mat(0xc49a72), [0.02, -0.08, -0.02], [1.1, 0.8, 0.85]);
+  const heldPlantSlot = new THREE.Group();
+  heldRoot.add(heldPlantSlot);
+  heldRoot.position.set(0.52, -0.43, -0.92);
+  heldRoot.rotation.set(0.08, -0.16, -0.16);
+  camera.add(heldRoot);
+
+  function updateStock() {
+    if (stockLabel) stockLabel.textContent = `🌽 ${inventory.corn}  🌻 ${inventory.sunflower}  🎃 ${inventory.pumpkin}`;
+  }
+
+  function updateHeldPlant() {
+    heldPlantSlot.clear();
+    const model = makePlant(selected);
+    model.scale.setScalar(selected === "pumpkin" ? 0.42 : 0.34);
+    model.position.set(-0.02, -0.02, 0);
+    model.rotation.set(0.16, 0.1, -0.34);
+    heldPlantSlot.add(model);
+  }
 
   function selectType(kind) {
     if (!descriptions[kind]) return;
@@ -70,7 +95,26 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     if (ability) ability.textContent = descriptions[kind].ability;
     if (detail) detail.textContent = descriptions[kind].detail;
     if (choices) choices.querySelectorAll("[data-seed]").forEach(item => item.classList.toggle("selected", item.dataset.seed === kind));
-    showToast(descriptions[kind].name + " selecionado");
+    updateHeldPlant();
+    showToast(descriptions[kind].name + " selecionado · " + inventory[kind] + " sementes");
+  }
+
+  function makePickup(kind, x, z) {
+    const root = new THREE.Group();
+    const plant = makePlant(kind);
+    plant.scale.setScalar(0.55);
+    plant.position.y = 0.08;
+    root.add(plant);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.72, 0.045, 6, 24),
+      new THREE.MeshBasicMaterial({ color: palette[kind], transparent: true, opacity: 0.8 })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.08;
+    root.add(ring);
+    root.position.set(x, 0, z);
+    scene.add(root);
+    pickups.push({ root, kind, baseY: 0, phase: Math.random() * Math.PI * 2 });
   }
 
   function growPlant(x, z, kind) {
@@ -81,13 +125,18 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     scene.add(root);
     plants.push(root);
     if (plantCountLabel) plantCountLabel.textContent = String(plants.length);
-    const cloudOrigin = new THREE.Vector3(x, 0, z);
-    addPollenCloud(cloudOrigin, kind);
-    showToast("Planta cresceu e liberou uma nuvem de pólen!");
+    addPollenCloud(new THREE.Vector3(x, 0, z), kind);
+    showToast("Semente germinou: nuvem de pólen por alguns segundos!");
   }
 
-  function throwSeed() {
+  function sowSeed() {
     if (seedCooldown > 0 || seeds.length > 18) return;
+    if (inventory[selected] <= 0) {
+      showToast("Sem sementes desse tipo — procure uma planta para colher!");
+      return;
+    }
+    inventory[selected] -= 1;
+    updateStock();
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);
     const origin = camera.position.clone().addScaledVector(direction, 0.72);
@@ -101,10 +150,52 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     scene.add(mesh);
     seeds.push({ mesh, velocity, age: 0, kind: selected });
     seedCooldown = selected === "pumpkin" ? 0.8 : selected === "sunflower" ? 0.55 : 0.32;
+    handMotion = 1;
   }
 
-  function update(delta) {
+  function interact(playerPosition) {
+    let nearest = null;
+    let nearestDistance = 3.25;
+    for (const pickup of pickups) {
+      const distance = Math.hypot(playerPosition.x - pickup.root.position.x, playerPosition.z - pickup.root.position.z);
+      if (distance < nearestDistance) {
+        nearest = pickup;
+        nearestDistance = distance;
+      }
+    }
+    if (!nearest) {
+      showToast("Procure plantas brilhando pela fazenda para colher sementes.");
+      return false;
+    }
+    inventory[nearest.kind] += 4;
+    scene.remove(nearest.root);
+    pickups.splice(pickups.indexOf(nearest), 1);
+    updateStock();
+    showToast(`Você colheu ${descriptions[nearest.kind].name}: +4 sementes!`);
+    return true;
+  }
+
+  // Scattered harvest spots make exploration useful and replenish the seed pouch.
+  makePickup("corn", -3, -14);
+  makePickup("sunflower", 22, -28);
+  makePickup("pumpkin", 35, -7);
+  makePickup("corn", -19, 13);
+  makePickup("sunflower", 44, -43);
+  makePickup("pumpkin", -43, -2);
+
+  function update(delta, active = false) {
+    elapsed += delta;
     seedCooldown = Math.max(0, seedCooldown - delta);
+    heldRoot.visible = active;
+    const sway = Math.sin(elapsed * 2.3) * 0.018;
+    heldRoot.position.y = -0.43 + sway - handMotion * 0.045;
+    heldRoot.rotation.x = 0.08 + handMotion * 0.18;
+    handMotion = Math.max(0, handMotion - delta * 3.8);
+
+    for (const pickup of pickups) {
+      pickup.root.position.y = pickup.baseY + Math.sin(elapsed * 2 + pickup.phase) * 0.12;
+      pickup.root.rotation.y += delta * 0.55;
+    }
     for (const plant of plants) {
       const target = Math.min(1, (plant.scale.x || 0.08) + delta * 0.45);
       plant.scale.setScalar(target);
@@ -127,5 +218,6 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
   }
 
   selectType("corn");
-  return { update, throwSeed, selectType, getPlantCount: () => plants.length };
+  updateStock();
+  return { update, throwSeed: sowSeed, sowSeed, selectType, interact, getPlantCount: () => plants.length };
 }
