@@ -38,7 +38,6 @@ const weaponInfo = {
   },
 };
 
-// --- Rich material set ---
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
 const woodMat = mat(0x6b4a2e, { roughness: 0.95 });
 const darkWoodMat = mat(0x4a3320, { roughness: 0.95 });
@@ -63,7 +62,6 @@ function addPart(root, geometry, material, position, scale = [1, 1, 1], rotation
   return mesh;
 }
 
-// --- World plant models (when a seed lands) ---
 function makePlant(kind) {
   const root = new THREE.Group();
   const stem = mat(palette.stem);
@@ -89,61 +87,44 @@ function makePlant(kind) {
   return root;
 }
 
-// --- Detailed first-person weapon models ---
-// Local space: grip at origin, -Z is muzzle direction.
 function makeWeaponModel(kind) {
   const root = new THREE.Group();
 
   if (kind === "corn") {
-    // --- Corn Double-Barrel Shotgun ---
-    // Two visible barrels with husk-wrapped rings
     for (const side of [-1, 1]) {
       addPart(root, new THREE.CylinderGeometry(0.075, 0.085, 0.75, 10), mat(palette.corn),
         [side * 0.075, 0.03, -0.37], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-      // Husk rings on each barrel
       for (let i = 0; i < 4; i++) {
         addPart(root, new THREE.TorusGeometry(0.082, 0.012, 4, 10), huskMat,
           [side * 0.075, 0.03, -0.05 - i * 0.18], [1, 1, 1], [Math.PI / 2, 0, 0]);
       }
-      // Muzzle ends
       addPart(root, new THREE.CylinderGeometry(0.06, 0.06, 0.08, 10), darkMetalMat,
         [side * 0.075, 0.03, -0.76], [1, 1, 1], [-Math.PI / 2, 0, 0]);
     }
-    // Corn kernels ring near the receiver
     for (let i = 0; i < 14; i++) {
       const angle = (i / 14) * Math.PI * 2;
       addPart(root, new THREE.SphereGeometry(0.018, 6, 5), goldMat,
         [Math.cos(angle) * 0.105, 0.03 + Math.sin(angle) * 0.105, -0.18], [1, 1, 0.8]);
     }
-    // Receiver
     addPart(root, new THREE.BoxGeometry(0.22, 0.14, 0.3), woodMat, [0, 0, 0.05]);
-    // Wooden stock with cheek rest
     addPart(root, new THREE.BoxGeometry(0.14, 0.16, 0.45), woodMat, [0, -0.02, 0.28]);
     addPart(root, new THREE.BoxGeometry(0.1, 0.04, 0.35), darkWoodMat, [0, 0.06, 0.28]);
-    // Trigger guard + trigger
     addPart(root, new THREE.TorusGeometry(0.04, 0.012, 6, 12), darkMetalMat,
       [0, -0.08, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.015, 0.05, 0.015), metalMat, [0, -0.05, 0.02]);
-    // Grip
     addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.2, 8), woodMat,
       [0, -0.12, 0.12], [1, 1, 1], [0.4, 0, 0]);
-    // Extra shells strapped to the side
     for (let i = 0; i < 3; i++) {
       addPart(root, new THREE.CylinderGeometry(0.02, 0.02, 0.06, 6), shellMat,
         [0.12, 0, 0.05 + i * 0.08], [1, 1, 1], [0, 0, Math.PI / 2]);
     }
   } else if (kind === "sunflower") {
-    // --- Sunflower Sniper Rifle ---
-    // Long tapered barrel
     addPart(root, new THREE.CylinderGeometry(0.035, 0.045, 1.0, 10), mat(palette.stem),
       [0, 0.02, -0.55], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Muzzle brake
     addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.08, 10), darkMetalMat,
       [0, 0.02, -1.05], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Scope body
     addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.35, 10), darkMetalMat,
       [0, 0.1, -0.15], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Scope ends = flower heads with petals
     for (const z of [-0.34, 0.04]) {
       addPart(root, new THREE.CylinderGeometry(0.065, 0.055, 0.05, 12), mat(palette.sunflower),
         [0, 0.1, z], [1, 1, 1], [-Math.PI / 2, 0, 0]);
@@ -153,63 +134,47 @@ function makeWeaponModel(kind) {
           [Math.cos(a) * 0.065, 0.1 + Math.sin(a) * 0.065, z], [1, 0.4, 1.6]);
       }
     }
-    // Scope lens (front)
     addPart(root, new THREE.CircleGeometry(0.04, 12), lensMat,
       [0, 0.1, 0.065], [1, 1, 1]);
-    // Scope mounts
     for (const z of [-0.2, 0]) {
       addPart(root, new THREE.BoxGeometry(0.08, 0.06, 0.02), metalMat, [0, 0.04, z]);
     }
-    // Receiver
     addPart(root, new THREE.BoxGeometry(0.13, 0.12, 0.35), woodMat, [0, 0, 0.15]);
-    // Wooden stock + cheek rest
     addPart(root, new THREE.BoxGeometry(0.1, 0.14, 0.55), woodMat, [0, -0.02, 0.42]);
     addPart(root, new THREE.BoxGeometry(0.07, 0.035, 0.35), darkWoodMat, [0, 0.06, 0.42]);
-    // Trigger guard + trigger
     addPart(root, new THREE.TorusGeometry(0.035, 0.01, 6, 10), darkMetalMat,
       [0, -0.07, 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.012, 0.04, 0.012), metalMat, [0, -0.05, 0.12]);
-    // Grip
     addPart(root, new THREE.CylinderGeometry(0.035, 0.045, 0.18, 8), woodMat,
       [0, -0.1, 0.2], [1, 1, 1], [0.4, 0, 0]);
-    // Folded leaf bipod
     for (const side of [-1, 1]) {
       addPart(root, new THREE.CylinderGeometry(0.008, 0.008, 0.15, 4), metalMat,
         [side * 0.06, -0.05, -0.65], [1, 1, 1], [0.5, 0, side * 0.2]);
     }
   } else {
-    // --- Pumpkin Grenade Launcher ---
-    // Main pumpkin body
     addPart(root, new THREE.SphereGeometry(0.22, 14, 10), mat(palette.pumpkin),
       [0, 0, -0.2], [1.05, 0.95, 1.05]);
-    // Ribs around the pumpkin
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
       addPart(root, new THREE.BoxGeometry(0.018, 0.018, 0.42), mat(0xc96a28),
         [Math.cos(a) * 0.21, Math.sin(a) * 0.19, -0.2], [1, 1, 1], [0, 0, a]);
     }
-    // Muzzle (front opening)
     addPart(root, new THREE.CylinderGeometry(0.13, 0.15, 0.12, 14), mat(0xa0561c),
       [0, 0, -0.44], [1, 1, 1], [-Math.PI / 2, 0, 0]);
     addPart(root, new THREE.CylinderGeometry(0.1, 0.13, 0.05, 14), darkMetalMat,
       [0, 0, -0.51], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Stem front sight
     addPart(root, new THREE.CylinderGeometry(0.025, 0.04, 0.12, 6), mat(palette.stem),
       [0, 0.2, -0.15], [1, 1, 1], [0.2, 0, 0]);
-    // Curling vine decoration
     for (let i = 0; i < 5; i++) {
       addPart(root, new THREE.TorusGeometry(0.2, 0.012, 4, 8, Math.PI / 2), mat(palette.stem),
         [0, 0, -0.2], [1, 1, 1], [0, i * 1.3, 0.5]);
     }
-    // Trigger housing + guard + trigger
     addPart(root, new THREE.BoxGeometry(0.1, 0.1, 0.15), woodMat, [0, -0.18, 0.02]);
     addPart(root, new THREE.TorusGeometry(0.045, 0.012, 6, 12), darkMetalMat,
       [0, -0.22, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.015, 0.06, 0.015), metalMat, [0, -0.19, 0.02]);
-    // Grip
     addPart(root, new THREE.CylinderGeometry(0.05, 0.06, 0.28, 10), woodMat,
       [0, -0.2, 0.12], [1, 1, 1], [0.35, 0, 0]);
-    // Leaf sights on top
     for (const side of [-1, 1]) {
       addPart(root, new THREE.SphereGeometry(0.04, 6, 4), mat(palette.leafLight),
         [side * 0.15, 0.15, -0.35], [0.3, 0.8, 1.4]);
@@ -219,7 +184,6 @@ function makeWeaponModel(kind) {
   return root;
 }
 
-// Front (support) hand grip positions along each weapon's barrel/body.
 const weaponGrip = {
   corn: [0, -0.02, -0.3],
   sunflower: [0, -0.02, -0.5],
@@ -265,15 +229,19 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   let handMotion = 0;
   let elapsed = 0;
 
-  // Reload animation state (0..1..0 curve)
   let reloadActive = false;
   let reloadProgress = 0;
 
+  // === Ajustes de visibilidade da arma ===
+  // restY subiu de -0.44 para -0.30 (arma mais alta na tela)
+  // restZ desceu de -0.84 para -0.62 (arma mais próxima da câmera)
+  // restX mudou de 0.44 para 0.32 (arma menos colada na borda direita)
   const heldRoot = new THREE.Group();
   const sleeveMat = mat(0x557c54);
   const gloveMat = mat(0xc49a72);
-  const restY = -0.44;
-  const restZ = -0.84;
+  const restX = 0.32;
+  const restY = -0.30;
+  const restZ = -0.62;
 
   function makeHand() {
     const hand = new THREE.Group();
@@ -299,8 +267,12 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
 
   const heldPlantSlot = new THREE.Group();
   heldRoot.add(heldPlantSlot);
-  heldRoot.position.set(0.44, restY, restZ);
-  heldRoot.rotation.set(0.08, -0.12, -0.12);
+  heldRoot.position.set(restX, restY, restZ);
+  heldRoot.rotation.set(0.06, -0.14, -0.08);
+  // Importante: as armas precisam renderizar por cima da cena para não
+  // serem cortadas por objetos próximos (paredes, etc).
+  heldRoot.renderOrder = 999;
+  heldPlantSlot.renderOrder = 999;
   camera.add(heldRoot);
 
   function triggerReloadAnimation() {
@@ -451,7 +423,6 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
       if (plantCountLabel) plantCountLabel.textContent = String(growingCrops.length);
       addPollenCloud(new THREE.Vector3(crop.group.position.x, 0.15, crop.group.position.z), crop.kind, quality);
       playHarvest(quality);
-      // Reload animation only when the harvested weapon is the one in hand.
       if (crop.kind === selected) triggerReloadAnimation();
       playReload();
       showToast(`Você recarregou ${weaponInfo[crop.kind].name}: +${amount} munição!`);
@@ -482,7 +453,6 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
     shotCooldown = Math.max(0, shotCooldown - delta);
     heldRoot.visible = active;
 
-    // Reload animation progress (0 -> 1 -> 0 curve)
     if (reloadActive) {
       reloadProgress += delta * 2.6;
       if (reloadProgress >= 2) {
@@ -497,13 +467,12 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
     const sway = Math.sin(elapsed * 2.3) * 0.018;
     const recoil = weaponInfo[selected]?.recoilKick ?? 0.18;
 
-    // Combine idle sway, recoil kick, and reload tilt.
-    heldRoot.position.x = 0.44 + reloadCurve * 0.06;
+    heldRoot.position.x = restX + reloadCurve * 0.06;
     heldRoot.position.y = restY + sway - handMotion * 0.045 - reloadCurve * 0.18;
     heldRoot.position.z = restZ + handMotion * 0.07 + reloadCurve * 0.05;
-    heldRoot.rotation.x = 0.08 + handMotion * recoil + reloadCurve * 0.55;
-    heldRoot.rotation.y = -0.12 - reloadCurve * 0.1;
-    heldRoot.rotation.z = -0.12 + reloadCurve * 0.25;
+    heldRoot.rotation.x = 0.06 + handMotion * recoil + reloadCurve * 0.55;
+    heldRoot.rotation.y = -0.14 - reloadCurve * 0.1;
+    heldRoot.rotation.z = -0.08 + reloadCurve * 0.25;
 
     handMotion = Math.max(0, handMotion - delta * 3.8);
 
@@ -574,4 +543,4 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   updateStock();
   updateAmmoDisplay();
   return { update, shoot, selectType, interact, getPlantCount: () => growingCrops.length };
-                                                                  }
+    }
