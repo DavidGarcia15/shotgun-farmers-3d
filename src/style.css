@@ -138,7 +138,7 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
 }
 
 
-/* Plant launcher selection and harmless farm target challenge */
+/* Seed pouch, held botanical items and harvest interaction HUD */
 .seed-panel {
   position: absolute;
   top: 105px;
@@ -265,3 +265,22 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
 }
 
 /* Floating NPC transformation progress bars are rendered in the 3D world. */
+
+.seed-stock-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.55);
+  font-size: 7px;
+  letter-spacing: 1.1px;
+}
+.seed-stock-line b {
+  color: var(--cream);
+  font-size: 9px;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
