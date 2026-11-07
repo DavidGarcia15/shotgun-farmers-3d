@@ -65,14 +65,29 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
   let handMotion = 0;
   let elapsed = 0;
 
-  // First-person botanical item and a simple gardening glove, attached to the camera.
+  // First-person hand holding the selected plant, parented to the camera.
+  // The glove, fingers and plant stay in view while the player explores.
   const heldRoot = new THREE.Group();
-  const sleeve = addPart(heldRoot, new THREE.CylinderGeometry(0.13, 0.17, 0.42, 8), mat(0x557c54), [0.02, -0.27, 0.13], [1, 1, 0.85], [0.2, 0, -0.22]);
-  const glove = addPart(heldRoot, new THREE.SphereGeometry(0.17, 9, 7), mat(0xc49a72), [0.02, -0.08, -0.02], [1.1, 0.8, 0.85]);
+  const sleeveMat = mat(0x557c54);
+  const gloveMat = mat(0xc49a72);
+  addPart(heldRoot, new THREE.CylinderGeometry(0.13, 0.17, 0.43, 9), sleeveMat,
+    [0.02, -0.31, 0.16], [1, 1, 0.9], [0.2, 0, -0.2]);
+  // Palm and curled fingers create a readable grip around the plant stem.
+  addPart(heldRoot, new THREE.SphereGeometry(0.16, 10, 8), gloveMat,
+    [0.015, -0.075, -0.015], [1.08, 0.78, 0.82]);
+  for (let finger = 0; finger < 3; finger++) {
+    addPart(heldRoot, new THREE.CapsuleGeometry(0.043, 0.12, 3, 6), gloveMat,
+      [-0.09 + finger * 0.085, -0.13, -0.105], [1, 1, 1],
+      [0.28, 0, (finger - 1) * 0.16]);
+  }
+  addPart(heldRoot, new THREE.CapsuleGeometry(0.05, 0.12, 3, 6), gloveMat,
+    [0.13, -0.045, -0.035], [1, 1, 1], [0.15, 0, -0.72]);
+
   const heldPlantSlot = new THREE.Group();
+  heldPlantSlot.position.set(-0.015, 0.035, -0.015);
   heldRoot.add(heldPlantSlot);
-  heldRoot.position.set(0.52, -0.43, -0.92);
-  heldRoot.rotation.set(0.08, -0.16, -0.16);
+  heldRoot.position.set(0.48, -0.46, -0.88);
+  heldRoot.rotation.set(0.04, -0.12, -0.12);
   camera.add(heldRoot);
 
   function updateStock() {
