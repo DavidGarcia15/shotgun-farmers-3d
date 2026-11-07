@@ -414,7 +414,7 @@ function showToast(message) {
 }
 
 const companionSystem = createCompanionSystem(scene, showToast);
-const seedPlantSystem = createSeedPlantSystem(scene, camera, showToast);
+const seedPlantSystem = createSeedPlantSystem(scene, camera, showToast, companionSystem.addPollenCloud);
 
 function lockPointer() {
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
