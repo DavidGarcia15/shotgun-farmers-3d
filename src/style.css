@@ -106,7 +106,6 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
   .brand-name { font-size: 16px; }
 }
 
-/* Friendly companion recruitment and field-helper HUD */
 .ally-pill { color: rgba(255,255,255,.9); }
 .ally-pill strong { color: var(--gold); margin: 0 3px; }
 .interaction-panel {
@@ -168,8 +167,6 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
   .ally-pill { display: none; }
 }
 
-
-/* Seed pouch, held botanical items and harvest interaction HUD */
 .seed-panel {
   position: absolute;
   top: 105px;
@@ -295,8 +292,6 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
   .seed-panel { top: 78px; transform: scale(.84); transform-origin: top left; }
 }
 
-/* Floating NPC transformation progress bars are rendered in the 3D world. */
-
 .seed-stock-line {
   display: flex;
   justify-content: space-between;
@@ -315,3 +310,11 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
   letter-spacing: .4px;
   white-space: nowrap;
 }
+
+#ammo-count {
+  color: var(--gold);
+  font-weight: 700;
+}
+.seed-panel-stats b#ammo-count {
+  font-size: 12px;
+  }
