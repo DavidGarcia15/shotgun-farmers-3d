@@ -98,8 +98,9 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     heldPlantSlot.clear();
     const model = makePlant(selected);
     model.scale.setScalar(selected === "pumpkin" ? 0.42 : 0.34);
+    // Carry the plant diagonally across the lower-right view, with the flower head angled toward the center.
     model.position.set(-0.02, -0.02, 0);
-    model.rotation.set(0.16, 0.1, -0.34);
+    model.rotation.set(0.08, 0.12, 0.88);
     heldPlantSlot.add(model);
   }
 
