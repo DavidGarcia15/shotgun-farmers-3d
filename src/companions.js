@@ -164,8 +164,25 @@ export function createCompanionSystem(scene, showToast) {
     const farmer = makeFarmer(data.variant);
     root.add(farmer);
     scene.add(root);
+    const barRoot = new THREE.Group();
+    barRoot.position.set(0, 3.05, 0);
+    const barBack = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.15, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x263226, side: THREE.DoubleSide })
+    );
+    const barFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.08, 0.07),
+      new THREE.MeshBasicMaterial({ color: 0xe6b94f, side: THREE.DoubleSide })
+    );
+    barFill.position.z = 0.01;
+    barFill.position.x = -0.54;
+    barFill.geometry.translate(0.54, 0, 0);
+    barRoot.add(barBack, barFill);
+    root.add(barRoot);
     npcs.push({
       root,
+      barRoot,
+      barFill,
       farmer,
       animal: null,
       kind: data.kind,
@@ -206,6 +223,27 @@ export function createCompanionSystem(scene, showToast) {
     showToast(labels[npc.kind] + " plantou uma semente!");
   }
 
+  const pollenClouds = [];
+
+  function addPollenCloud(position, kind) {
+    const strengths = { corn: 0.18, sunflower: 0.32, pumpkin: 0.48 };
+    const colors = { corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239 };
+    const cloud = new THREE.Group();
+    const cloudMaterial = new THREE.MeshBasicMaterial({
+      color: colors[kind] || 0xe9c34f, transparent: true, opacity: 0.34,
+      depthWrite: false
+    });
+    for (let i = 0; i < 5; i++) {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.72 + Math.random() * 0.28, 9, 7), cloudMaterial);
+      puff.position.set((Math.random() - 0.5) * 1.4, 0.8 + Math.random() * 1.2, (Math.random() - 0.5) * 1.4);
+      cloud.add(puff);
+    }
+    cloud.position.copy(position);
+    cloud.position.y = 0.15;
+    scene.add(cloud);
+    pollenClouds.push({ root: cloud, age: 0, duration: 2.8, radius: 5.2, strength: strengths[kind] || 0.18, affected: new Set() });
+  }
+
   function setInteractionVisible(visible) {
     if (panel) panel.classList.toggle("visible", visible);
   }
@@ -228,29 +266,54 @@ export function createCompanionSystem(scene, showToast) {
     closest = nearestDistance < 4.8 ? nearest : null;
     if (closest && active) {
       setInteractionVisible(true);
-      if (title) title.textContent = "CONVIDAR " + labels[closest.kind].toUpperCase();
-      const holding = Boolean(keys.KeyE);
-      closest.bond = THREE.MathUtils.clamp(
-        closest.bond + (holding ? delta * 0.62 : -delta * 0.22), 0, 1
-      );
+      if (title) title.textContent = "PÓLEN: " + labels[closest.kind].toUpperCase();
       if (progress) progress.style.width = (closest.bond * 100).toFixed(0) + "%";
-      if (hint) hint.textContent = holding ? "CRIANDO VÍNCULO..." : "SEGURE E PARA CONVIDAR";
-      if (closest.bond >= 1) {
-        closest.recruited = true;
-        closest.root.remove(closest.farmer);
-        closest.animal = makeAnimal(closest.kind);
-        closest.root.add(closest.animal);
-        closest.patrolCenter.copy(closest.root.position);
-        closest.plantTimer = 3.5;
-        recruitedCount += 1;
-        if (allyCount) allyCount.textContent = String(recruitedCount);
-        setInteractionVisible(false);
-        showToast(labels[closest.kind] + " agora ajuda sua equipe!");
-        closest = null;
-      }
+      if (hint) hint.textContent = "APROXIME UMA NUVEM DE PÓLEN";
     } else {
       setInteractionVisible(false);
-      if (nearest) nearest.bond = Math.max(0, nearest.bond - delta * 0.3);
+    }
+
+    for (let i = pollenClouds.length - 1; i >= 0; i--) {
+      const cloud = pollenClouds[i];
+      cloud.age += delta;
+      const fade = Math.max(0, 1 - cloud.age / cloud.duration);
+      cloud.root.scale.setScalar(0.65 + (1 - fade) * 0.65);
+      cloud.root.children.forEach((puff) => { puff.material.opacity = 0.34 * fade; });
+      for (const npc of npcs) {
+        if (npc.recruited || cloud.affected.has(npc)) continue;
+        const distance = Math.hypot(
+          npc.root.position.x - cloud.root.position.x,
+          npc.root.position.z - cloud.root.position.z
+        );
+        if (distance < cloud.radius) {
+          npc.bond = THREE.MathUtils.clamp(npc.bond + cloud.strength, 0, 1);
+          cloud.affected.add(npc);
+          if (npc.bond >= 1) {
+            npc.recruited = true;
+            npc.root.remove(npc.farmer);
+            npc.animal = makeAnimal(npc.kind);
+            npc.root.add(npc.animal);
+            npc.barRoot.visible = false;
+            npc.patrolCenter.copy(npc.root.position);
+            npc.plantTimer = 3.5;
+            recruitedCount += 1;
+            if (allyCount) allyCount.textContent = String(recruitedCount);
+            showToast(labels[npc.kind] + " virou um animal aliado!");
+          }
+        }
+      }
+      if (cloud.age >= cloud.duration) {
+        scene.remove(cloud.root);
+        pollenClouds.splice(i, 1);
+      }
+    }
+
+    for (const npc of npcs) {
+      if (!npc.recruited) {
+        npc.barRoot.lookAt(playerPosition.x, playerPosition.y + 1.2, playerPosition.z);
+        npc.barFill.scale.x = Math.max(0.001, npc.bond);
+        npc.barFill.position.x = -0.54 + 0.54 * npc.bond;
+      }
     }
 
     for (const npc of npcs) {
@@ -286,5 +349,5 @@ export function createCompanionSystem(scene, showToast) {
     }
   }
 
-  return { update };
+  return { update, addPollenCloud };
 }
