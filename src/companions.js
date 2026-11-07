@@ -27,7 +27,6 @@ const mats = {
   flower: makeMaterial(0xe9c65b),
   flowerAlt: makeMaterial(0xe6a2a0),
   soil: makeMaterial(0x76523b),
-  seed: makeMaterial(0x60462e),
 };
 
 const sphere = (parent, material, position, scale, geometry = [0.5, 12, 9]) => {
@@ -147,7 +146,6 @@ export function createCompanionSystem(scene, showToast) {
   const hint = document.querySelector("#interaction-hint");
   const progress = document.querySelector("#interaction-progress");
   const allyCount = document.querySelector("#ally-count");
-  const allyKinds = ["capybara", "rabbit", "chicken"];
   const labels = { capybara: "Capivara", rabbit: "Coelho", chicken: "Galinha" };
   const npcs = [];
   const growingPlants = [];
@@ -182,14 +180,8 @@ export function createCompanionSystem(scene, showToast) {
     barRoot.add(barBack, barFill);
     root.add(barRoot);
     npcs.push({
-      root,
-      barRoot,
-      barFill,
-      farmer,
-      animal: null,
-      kind: data.kind,
-      recruited: false,
-      bond: 0,
+      root, barRoot, barFill, farmer, animal: null,
+      kind: data.kind, recruited: false, bond: 0,
       patrolCenter: new THREE.Vector3(data.x, 0, data.z),
       target: new THREE.Vector3(data.x, 0, data.z),
       speed: 1.05 + index * 0.15,
@@ -227,16 +219,13 @@ export function createCompanionSystem(scene, showToast) {
 
   const pollenClouds = [];
 
-  // quality (0..1) scales the pollen strength — a crop harvested early gives a
-  // weaker push than one left to fully mature. options can tighten the cloud
-  // into a small, near-instant burst for a direct hit on a single farmer.
   function addPollenCloud(position, kind, quality = 1, options = {}) {
     const strengths = { corn: 0.18, sunflower: 0.32, pumpkin: 0.48 };
     const colors = { corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239 };
     const cloud = new THREE.Group();
     const cloudMaterial = new THREE.MeshBasicMaterial({
       color: colors[kind] || 0xe9c34f, transparent: true, opacity: 0.34,
-      depthWrite: false
+      depthWrite: false,
     });
     for (let i = 0; i < 5; i++) {
       const puff = new THREE.Mesh(new THREE.SphereGeometry(0.72 + Math.random() * 0.28, 9, 7), cloudMaterial);
@@ -247,8 +236,7 @@ export function createCompanionSystem(scene, showToast) {
     cloud.position.y = 0.15;
     scene.add(cloud);
     pollenClouds.push({
-      root: cloud,
-      age: 0,
+      root: cloud, age: 0,
       duration: options.duration ?? 2.8,
       radius: options.radius ?? 5.2,
       strength: (strengths[kind] || 0.18) * quality,
@@ -256,8 +244,6 @@ export function createCompanionSystem(scene, showToast) {
     });
   }
 
-  // A seed that hits a farmer in flight is spent on the spot: no plant grows
-  // from it, just a tight, instant burst of pollen for that one farmer.
   function tryDirectHit(position, kind) {
     let nearest = null;
     let nearestDistance = 1.15;
