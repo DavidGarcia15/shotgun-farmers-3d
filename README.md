@@ -2,7 +2,7 @@
 
 A browser-based 3D first-person farm exploration prototype inspired by the playful look and plant-growth ideas of farm arcade games. This is an original, nonviolent project: the environment is generated with procedural geometry and does not use assets or source code from Shotgun Farmers.
 
-## Prototype 001
+## Prototype 002
 
 This first milestone focuses on the playable foundation:
 
