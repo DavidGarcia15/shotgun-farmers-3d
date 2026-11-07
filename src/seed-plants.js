@@ -117,8 +117,8 @@ export function createSeedPlantSystem(scene, camera, showToast) {
 
   const targets = [
     makePracticeTarget(scene, -11, -10, 0),
-    makePracticeTarget(scene, 13, -26, 1),
-    makePracticeTarget(scene, 34, -17, 2),
+    makePracticeTarget(scene, 43, -30, 1),
+    makePracticeTarget(scene, 0, -49, 2),
   ];
   const plants = [];
   const seeds = [];
