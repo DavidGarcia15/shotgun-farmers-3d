@@ -10,6 +10,9 @@ This first milestone focuses on the playable foundation:
 - WASD movement, Shift to run, and Space to jump.
 - A procedural farm environment with a barn, silo, crop rows, hay bales, scarecrows, trees, fence lines, a dirt path, lighting, shadows, and moving clouds.
 - A lightweight HUD and start screen.
+- Three friendly farm NPCs that wander around the field.
+- Hold **E** near a farmer to invite them; they transform into a capybara, rabbit, or chicken helper.
+- Animal helpers wander autonomously and plant decorative seedlings that grow over a few seconds.
 
 ## Run locally
 
@@ -31,6 +34,7 @@ Then open \`http://localhost:8000\`.
 | Mouse | Look around |
 | Shift | Run |
 | Space | Jump |
+| E (hold near a farmer) | Invite a friendly companion |
 | Esc | Release mouse / pause |
 
 ## GitHub Pages
@@ -42,9 +46,9 @@ To publish the prototype, open the repository's **Settings → Pages**, choose *
 1. Environment and first-person movement.
 2. Seed planting and crop-growth interactions.
 3. Garden tools, watering, and harvest feedback.
-4. Friendly farm characters and cooperative field challenges.
-5. Match flow, scoring, audio, and visual polish.
-6. Optional online cooperative play.
+4. More companion personalities, animations, and planting patterns.
+5. Harvestable crops, field challenges, audio, and visual polish.
+6. Optional online cooperative exploration.
 
 ## Tech
 
