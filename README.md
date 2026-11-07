@@ -2,7 +2,7 @@
 
 A browser-based 3D first-person farm exploration prototype inspired by the playful look and plant-growth ideas of farm arcade games. This is an original, nonviolent project: the environment is generated with procedural geometry and does not use assets or source code from Shotgun Farmers.
 
-## Prototype 002
+## Prototype 003
 
 This first milestone focuses on the playable foundation:
 
@@ -13,6 +13,10 @@ This first milestone focuses on the playable foundation:
 - Three friendly farm NPCs that wander around the field.
 - Hold **E** near a farmer to invite them; they transform into a capybara, rabbit, or chicken helper.
 - Animal helpers wander autonomously and plant decorative seedlings that grow over a few seconds.
+- Three plant launchers: corn (triple burst), sunflower (growth pulse), and pumpkin (slow compost seed with bonus points).
+- Practice boards around the farm provide a harmless aiming challenge and a target score.
+- Select a seed with **1**, **2**, or **3**, then use the left mouse button to toss it.
+- Seeds that miss the practice boards and reach the soil germinate into another plant launcher; this creates a capped chain of new plants.
 
 ## Run locally
 
@@ -35,6 +39,8 @@ Then open \`http://localhost:8000\`.
 | Shift | Run |
 | Space | Jump |
 | E (hold near a farmer) | Invite a friendly companion |
+| 1 / 2 / 3 | Select corn / sunflower / pumpkin seed |
+| Left mouse button | Toss the selected seed |
 | Esc | Release mouse / pause |
 
 ## GitHub Pages
@@ -47,7 +53,7 @@ To publish the prototype, open the repository's **Settings → Pages**, choose *
 2. Seed planting and crop-growth interactions.
 3. Garden tools, watering, and harvest feedback.
 4. More companion personalities, animations, and planting patterns.
-5. Harvestable crops, field challenges, audio, and visual polish.
+5. Harvestable crops, expanded target challenges, audio, and visual polish.
 6. Optional online cooperative exploration.
 
 ## Tech
