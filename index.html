@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#17231b">
+  <meta name="description" content="Farmers Field — protótipo 3D em primeira pessoa inspirado em jogos de fazenda e ação.">
+  <title>Farmers Field — 3D Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="game">
+    <canvas id="game-canvas" aria-label="Ambiente 3D do jogo"></canvas>
+
+    <section class="hud" aria-hidden="true">
+      <div class="brand">
+        <span class="brand-mark">🌽</span>
+        <div>
+          <div class="brand-name">FARMERS <span>FIELD</span></div>
+          <div class="brand-sub">3D FIELD TEST <i></i> BUILD 001</div>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <div class="status-pill"><span class="status-dot"></span> EXPLORATION MODE</div>
+        <div class="coordinate" id="coordinates">X 000 · Z 000</div>
+      </div>
+
+      <div class="crosshair"><span></span><i></i></div>
+
+      <div class="bottom-left">
+        <div class="mini-label">FIELD STATUS</div>
+        <div class="status-line"><span class="status-dot"></span><strong>AREA SECURE</strong></div>
+        <div class="location-name">SUNFLOWER VALLEY</div>
+      </div>
+
+      <div class="bottom-center">
+        <span class="keycap">W</span><span class="keycap">A</span><span class="keycap">S</span><span class="keycap">D</span>
+        <span class="control-caption">MOVE</span>
+        <span class="keycap keycap-wide">SHIFT</span><span class="control-caption">RUN</span>
+        <span class="keycap keycap-wide">SPACE</span><span class="control-caption">JUMP</span>
+      </div>
+
+      <div class="bottom-right">
+        <div class="mini-label">PROTOTYPE</div>
+        <div class="build-number">001 <span>/ 006</span></div>
+        <div class="build-caption">MOVEMENT &amp; ENVIRONMENT</div>
+      </div>
+    </section>
+
+    <section class="start-screen" id="start-screen">
+      <div class="start-card">
+        <div class="eyebrow"><span></span> A LITTLE CHAOS IS GROWING</div>
+        <div class="hero-title">WELCOME TO<br><em>THE FIELD.</em></div>
+        <p class="intro">Explore the farm. Get familiar with the land.<br>This is only the beginning.</p>
+        <button class="start-button" id="start-button">
+          <span>ENTER THE FARM</span><b>→</b>
+        </button>
+        <div class="start-foot"><span>FIRST-PERSON FIELD TEST</span><span>WASD <i>·</i> MOUSE</span></div>
+      </div>
+      <div class="start-version">FARMERS FIELD <span>—</span> PROTOTYPE 001</div>
+    </section>
+
+    <div class="pause-hint" id="pause-hint">
+      <span>⏸</span> PAUSED — CLICK TO RETURN
+    </div>
+
+    <div class="toast" id="toast">Welcome to Sunflower Valley</div>
+  </main>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
