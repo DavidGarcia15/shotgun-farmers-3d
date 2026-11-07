@@ -1,34 +1,19 @@
 # Farmers Field — 3D Prototype
 
-A browser-based 3D first-person farm exploration prototype inspired by the playful look and plant-growth ideas of farm arcade games. This is an original, nonviolent project: the environment is generated with procedural geometry and does not use assets or source code from Shotgun Farmers.
+A browser-based, first-person farm exploration game built with Three.js. It takes broad inspiration from the playful farm setting and crop-growth loop of arcade farm games, while using original code, procedural geometry, and a nonviolent cooperative design.
 
-## Prototype 003
-
-This first milestone focuses on the playable foundation:
+## Current features
 
 - First-person camera with mouse look and pointer lock.
-- WASD movement, Shift to run, and Space to jump.
-- A procedural farm environment with a barn, silo, crop rows, hay bales, scarecrows, trees, fence lines, a dirt path, lighting, shadows, and moving clouds.
-- A lightweight HUD and start screen.
-- Three friendly farm NPCs that wander around the field.
-- Hold **E** near a farmer to invite them; they transform into a capybara, rabbit, or chicken helper.
-- Animal helpers wander autonomously and plant decorative seedlings that grow over a few seconds.
-- Three plant launchers: corn (triple burst), sunflower (growth pulse), and pumpkin (slow compost seed with bonus points).
-- Practice boards around the farm provide a harmless aiming challenge and a target score.
-- Select a seed with **1**, **2**, or **3**, then use the left mouse button to toss it.
-- Seeds that miss the practice boards and reach the soil germinate into another plant launcher; this creates a capped chain of new plants.
-
-## Run locally
-
-The project uses Three.js as an ES module from jsDelivr. Because browser module imports are restricted when opening files directly, serve the folder with a local web server.
-
-For example, with Python installed:
-
-\`\`\`bash
-python -m http.server 8000
-\`\`\`
-
-Then open \`http://localhost:8000\`.
+- WASD movement, Shift to run, Space to jump.
+- Procedural farm environment with barn, silo, crop rows, hay bales, scarecrows, trees, fences, a dirt path, lighting, shadows, and moving clouds.
+- Three friendly farmer NPCs wander around the field. Brief pollen clouds fill their transformation bars; at 100%, a farmer becomes a capybara, rabbit, or chicken helper.
+- Animal helpers wander autonomously and plant decorative seedlings.
+- Three botanical varieties: corn, sunflower, and pumpkin. Each has a different pollen strength.
+- The selected plant is visibly held in the lower-right of the first-person view, with a small hand/sleeve model.
+- Explore the farm and press **E** near a glowing plant pickup to harvest it. Each harvested plant adds four seeds of that variety to your pouch.
+- Select a seed with **1**, **2**, or **3**. Left-click to sow a seed into the soil; it grows into a plant and releases a short-lived pollen cloud.
+- A seed pouch HUD displays the selected plant, pollen ability, plant count, and remaining seed inventory.
 
 ## Controls
 
@@ -38,23 +23,31 @@ Then open \`http://localhost:8000\`.
 | Mouse | Look around |
 | Shift | Run |
 | Space | Jump |
-| E (hold near a farmer) | Invite a friendly companion |
-| 1 / 2 / 3 | Select corn / sunflower / pumpkin seed |
-| Left mouse button | Toss the selected seed |
+| E near a glowing plant | Harvest +4 seeds |
+| 1 / 2 / 3 | Select corn / sunflower / pumpkin |
+| Left mouse button | Sow selected seed |
 | Esc | Release mouse / pause |
+
+## Run locally
+
+The project uses Three.js as an ES module from jsDelivr. Serve the folder with a local web server rather than opening the HTML file directly.
+
+```bash
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000`.
 
 ## GitHub Pages
 
-To publish the prototype, open the repository's **Settings → Pages**, choose **Deploy from a branch**, select **main** and **/ (root)**, then save. The game will be served from the repository's GitHub Pages URL after deployment completes.
+To publish the prototype, open the repository's **Settings → Pages**, choose **Deploy from a branch**, select **main** and **/ (root)**, then save. GitHub Pages will publish the site after deployment completes.
 
-## Roadmap
+## Next ideas
 
-1. Environment and first-person movement.
-2. Seed planting and crop-growth interactions.
-3. Garden tools, watering, and harvest feedback.
-4. More companion personalities, animations, and planting patterns.
-5. Harvestable crops, expanded target challenges, audio, and visual polish.
-6. Optional online cooperative exploration.
+1. Add growth stages and harvest animations to the main crop rows.
+2. Add more cooperative farm objectives for the animal helpers.
+3. Add simple sound effects, accessibility settings, and performance options.
+4. Add more maps and optional online cooperative exploration.
 
 ## Tech
 
