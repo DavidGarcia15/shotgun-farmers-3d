@@ -1,8 +1,10 @@
 import * as THREE from "three";
+import { playTransform } from "./sound.js";
 
 // Friendly farm companions: nearby farmers can be invited to help.
 // After joining, each becomes a small animal helper that wanders and plants
-// decorative crops around the field. There is no combat or damage system.
+// decorative crops around the field. There is no combat or damage system —
+// a farmer's bar fills from pollen instead of draining from harm.
 
 const makeMaterial = (color, roughness = 0.88) =>
   new THREE.MeshStandardMaterial({ color, roughness });
@@ -225,7 +227,10 @@ export function createCompanionSystem(scene, showToast) {
 
   const pollenClouds = [];
 
-  function addPollenCloud(position, kind) {
+  // quality (0..1) scales the pollen strength — a crop harvested early gives a
+  // weaker push than one left to fully mature. options can tighten the cloud
+  // into a small, near-instant burst for a direct hit on a single farmer.
+  function addPollenCloud(position, kind, quality = 1, options = {}) {
     const strengths = { corn: 0.18, sunflower: 0.32, pumpkin: 0.48 };
     const colors = { corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239 };
     const cloud = new THREE.Group();
@@ -241,7 +246,33 @@ export function createCompanionSystem(scene, showToast) {
     cloud.position.copy(position);
     cloud.position.y = 0.15;
     scene.add(cloud);
-    pollenClouds.push({ root: cloud, age: 0, duration: 2.8, radius: 5.2, strength: strengths[kind] || 0.18, affected: new Set() });
+    pollenClouds.push({
+      root: cloud,
+      age: 0,
+      duration: options.duration ?? 2.8,
+      radius: options.radius ?? 5.2,
+      strength: (strengths[kind] || 0.18) * quality,
+      affected: new Set(),
+    });
+  }
+
+  // A seed that hits a farmer in flight is spent on the spot: no plant grows
+  // from it, just a tight, instant burst of pollen for that one farmer.
+  function tryDirectHit(position, kind) {
+    let nearest = null;
+    let nearestDistance = 1.15;
+    for (const npc of npcs) {
+      if (npc.recruited) continue;
+      const head = new THREE.Vector3(npc.root.position.x, npc.root.position.y + 1.15, npc.root.position.z);
+      const distance = position.distanceTo(head);
+      if (distance < nearestDistance) { nearestDistance = distance; nearest = npc; }
+    }
+    if (!nearest) return false;
+    addPollenCloud(
+      new THREE.Vector3(nearest.root.position.x, 0.15, nearest.root.position.z),
+      kind, 1, { radius: 1.6, duration: 0.5 }
+    );
+    return true;
   }
 
   function setInteractionVisible(visible) {
@@ -298,6 +329,7 @@ export function createCompanionSystem(scene, showToast) {
             npc.plantTimer = 3.5;
             recruitedCount += 1;
             if (allyCount) allyCount.textContent = String(recruitedCount);
+            playTransform();
             showToast(labels[npc.kind] + " virou um animal aliado!");
           }
         }
@@ -349,5 +381,5 @@ export function createCompanionSystem(scene, showToast) {
     }
   }
 
-  return { update, addPollenCloud };
+  return { update, addPollenCloud, tryDirectHit };
 }

@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { createCompanionSystem } from "./companions.js";
 import { createSeedPlantSystem } from "./seed-plants.js";
+import { unlockAudio } from "./sound.js";
 
-// Farmers Field — prototype 003
-// First-person farm exploration with friendly NPC companions and seedling growth.
-// The world is built from procedural geometry, so no copyrighted game assets are used.
+// Farmers Field — prototype 005
+// First-person farm exploration with friendly NPC companions, seed-growth crops,
+// and a Shotgun-Farmers-style sow/harvest loop. The world is built from procedural
+// geometry, so no copyrighted game assets are used.
 
 const canvas = document.querySelector("#game-canvas");
 const startScreen = document.querySelector("#start-screen");
@@ -414,15 +416,17 @@ function showToast(message) {
 }
 
 const companionSystem = createCompanionSystem(scene, showToast);
-const seedPlantSystem = createSeedPlantSystem(scene, camera, showToast, companionSystem.addPollenCloud);
+const seedPlantSystem = createSeedPlantSystem(
+  scene, camera, showToast, companionSystem.addPollenCloud, companionSystem.tryDirectHit
+);
 
 function lockPointer() {
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
 }
 
-startButton.addEventListener("click", lockPointer);
+startButton.addEventListener("click", () => { unlockAudio(); lockPointer(); });
 startScreen.addEventListener("click", (event) => {
-  if (event.target === startScreen) lockPointer();
+  if (event.target === startScreen) { unlockAudio(); lockPointer(); }
 });
 
 document.addEventListener("pointerlockchange", () => {

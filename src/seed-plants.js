@@ -1,18 +1,30 @@
 import * as THREE from "three";
+import { playPlant, playDirectHit, playHarvest } from "./sound.js";
 
-// A nonviolent farm loop: collect botanical supplies, hold a plant, sow a seed,
-// and let its brief pollen cloud help nearby farmers become animal companions.
+// A nonviolent Shotgun-Farmers-style loop: seeds you throw are both ammo and crop.
+// Hit a farmer directly and the seed is spent at once as a burst of pollen.
+// Miss, and it lands, takes root, and grows — the longer you let it grow before
+// harvesting with E, the more seeds (and the stronger the pollen) you get back.
+// There is no manual reload: every seed in your pouch came from a harvest.
 
 const palette = {
   corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239,
   leaf: 0x5d9149, leafLight: 0x8fb85c, stem: 0x48753c,
 };
 const descriptions = {
-  corn: { name: "MILHO", ability: "PÓLEN LEVE", detail: "Nuvem curta; preenche um pouco da barra.", strength: "18%" },
-  sunflower: { name: "GIRASSOL", ability: "PÓLEN VIVO", detail: "Nuvem média; preenche mais a barra.", strength: "32%" },
-  pumpkin: { name: "ABÓBORA", ability: "PÓLEN FORTE", detail: "Nuvem potente; semeadura mais lenta.", strength: "48%" },
+  corn: { name: "MILHO", ability: "PÓLEN LEVE", detail: "Cresce rápido (9s). Pólen leve, poucas sementes por colheita.", strength: "18%" },
+  sunflower: { name: "GIRASSOL", ability: "PÓLEN VIVO", detail: "Crescimento médio (13s). Equilíbrio entre pólen e sementes.", strength: "32%" },
+  pumpkin: { name: "ABÓBORA", ability: "PÓLEN FORTE", detail: "Crescimento lento (18s). Pólen forte, colheita mais farta.", strength: "48%" },
+};
+// Growth duration to reach full maturity, seed yield range (early vs. full harvest),
+// and the mature display scale — each variety plays like a different "weapon class".
+const kindConfig = {
+  corn: { growTime: 9, minYield: 1, maxYield: 4, matureScale: 0.55, recoilKick: 0.15 },
+  sunflower: { growTime: 13, minYield: 1, maxYield: 5, matureScale: 0.58, recoilKick: 0.19 },
+  pumpkin: { growTime: 18, minYield: 2, maxYield: 7, matureScale: 0.62, recoilKick: 0.29 },
 };
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
+const soilMat = mat(0x5a402f);
 
 function addPart(root, geometry, material, position, scale = [1, 1, 1], rotation = [0, 0, 0]) {
   const mesh = new THREE.Mesh(geometry, material);
@@ -49,14 +61,113 @@ function makePlant(kind) {
   return root;
 }
 
-export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) {
+// Original, from-scratch weapon silhouettes for the first-person view — not
+// modeled on any existing game's designs, just built to read as the "weapon
+// class" each variety's growth stats already imply: corn short & wide (fast,
+// light), sunflower long & slender (balanced), pumpkin bulky & round (slow,
+// heavy). Local space: origin is the grip, -Z is the muzzle direction, +Y is up.
+function makeWeaponModel(kind) {
+  const root = new THREE.Group();
+  const stem = mat(palette.stem);
+  const leaf = mat(palette.leaf);
+  const light = mat(palette.leafLight);
+  const dark = mat(0x3c2c1c);
+
+  if (kind === "corn") {
+    addPart(root, new THREE.CylinderGeometry(0.095, 0.11, 0.52, 10), mat(palette.corn),
+      [0, 0.02, -0.26], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    for (let ring = 0; ring < 2; ring++) {
+      const z = -0.1 - ring * 0.28;
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + ring * 0.3;
+        addPart(root, new THREE.SphereGeometry(0.026, 6, 5), mat(0xf3d96a),
+          [Math.cos(a) * 0.1, 0.02 + Math.sin(a) * 0.1, z]);
+      }
+    }
+    for (const side of [-1, 1]) {
+      const fin = addPart(root, new THREE.SphereGeometry(0.2, 8, 6), leaf,
+        [side * 0.11, 0.04, 0.1], [0.3, 1, 1.3]);
+      fin.rotation.y = side * 0.55;
+    }
+    addPart(root, new THREE.CylinderGeometry(0.042, 0.055, 0.24, 7), stem,
+      [0, -0.13, 0.1], [1, 1, 1], [0.5, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.1, 0.1, 0.03, 10), dark,
+      [0, 0.02, -0.535], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.ConeGeometry(0.045, 0.14, 6), mat(0xe9dcb0),
+      [0, 0.06, -0.6], [1, 1, 1], [-Math.PI / 2 + 0.25, 0, 0]);
+  } else if (kind === "sunflower") {
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.058, 0.88, 9), stem,
+      [0, 0.01, -0.44], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.095, 10, 8), mat(0x65452d), [0, 0.13, 0.07]);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addPart(root, new THREE.SphereGeometry(0.06, 7, 6), mat(palette.sunflower),
+        [Math.cos(a) * 0.13, 0.13 + Math.sin(a) * 0.13, 0.07], [0.8, 1, 0.4]);
+    }
+    for (const side of [-1, 1]) {
+      const fin = addPart(root, new THREE.SphereGeometry(0.15, 8, 6), light,
+        [side * 0.065, -0.03, 0.15], [0.3, 0.9, 1.1]);
+      fin.rotation.z = side * 0.32;
+    }
+    addPart(root, new THREE.BoxGeometry(0.018, 0.022, 0.46), dark, [0, 0.055, -0.3]);
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.022, 8), dark,
+      [0, 0.01, -0.875], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  } else {
+    addPart(root, new THREE.CylinderGeometry(0.19, 0.2, 0.3, 12), mat(palette.pumpkin),
+      [0, 0, -0.15], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.2, 12, 9), mat(palette.pumpkin),
+      [0, 0, -0.32], [1, 0.9, 0.9]);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      addPart(root, new THREE.BoxGeometry(0.022, 0.02, 0.3), mat(0xc96a28),
+        [Math.cos(a) * 0.195, Math.sin(a) * 0.195, -0.15], [1, 1, 1], [0, 0, a]);
+    }
+    addPart(root, new THREE.CylinderGeometry(0.042, 0.058, 0.26, 8), stem,
+      [0, -0.15, 0.09], [1, 1, 1], [0.4, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.018, 0.032, 0.09, 6), stem, [0, 0.19, -0.28]);
+  }
+  return root;
+}
+
+// Where the front (support) hand grips each weapon — the rear/trigger hand
+// always grips the grip cylinder near the local origin, above.
+const weaponGrip = {
+  corn: [0, 0.04, -0.29],
+  sunflower: [0, 0.015, -0.49],
+  pumpkin: [0, 0.0, -0.16],
+};
+
+function makeGrowthRing(kind) {
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: palette[kind], transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false,
+  });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.56, 24, 1, -Math.PI / 2, 0.001), ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.035;
+  return ring;
+}
+
+// How many seeds (and how strong the released pollen) a crop yields right now —
+// shared by the actual harvest and by the live HUD preview, so they always agree.
+function cropYield(crop) {
+  const config = kindConfig[crop.kind];
+  const eased = crop.growth * crop.growth * (3 - 2 * crop.growth);
+  const amount = Math.max(1, Math.round(config.minYield + (config.maxYield - config.minYield) * eased));
+  const quality = 0.4 + 0.6 * eased;
+  return { amount, quality };
+}
+
+export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, tryDirectHit) {
   const choices = document.querySelector("#seed-choices");
   const name = document.querySelector("#seed-name");
   const ability = document.querySelector("#seed-ability");
   const detail = document.querySelector("#seed-detail");
   const plantCountLabel = document.querySelector("#plant-count");
+  const readyCountLabel = document.querySelector("#ready-count");
   const stockLabel = document.querySelector("#seed-stock");
-  const plants = [];
+  const harvestPrompt = document.querySelector("#harvest-prompt");
+  const harvestPromptText = document.querySelector("#harvest-prompt-text");
+  const growingCrops = [];
   const seeds = [];
   const pickups = [];
   const inventory = { corn: 5, sunflower: 3, pumpkin: 2 };
@@ -65,28 +176,42 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
   let handMotion = 0;
   let elapsed = 0;
 
-  // First-person hand holding the selected plant, parented to the camera.
-  // The glove, fingers and plant stay in view while the player explores.
+  // First-person two-handed grip, parented to the camera: a rear (trigger)
+  // hand near the weapon's grip, and a front (support) hand further along
+  // the barrel. Both reuse the same glove/sleeve build; only their position
+  // on the weapon changes per variety, in updateHeldPlant() below.
   const heldRoot = new THREE.Group();
   const sleeveMat = mat(0x557c54);
   const gloveMat = mat(0xc49a72);
-  addPart(heldRoot, new THREE.CylinderGeometry(0.13, 0.17, 0.43, 9), sleeveMat,
-    [0.02, -0.31, 0.16], [1, 1, 0.9], [0.2, 0, -0.2]);
-  // Palm and curled fingers create a readable grip around the plant stem.
-  addPart(heldRoot, new THREE.SphereGeometry(0.16, 10, 8), gloveMat,
-    [0.015, -0.075, -0.015], [1.08, 0.78, 0.82]);
-  for (let finger = 0; finger < 3; finger++) {
-    addPart(heldRoot, new THREE.CapsuleGeometry(0.043, 0.12, 3, 6), gloveMat,
-      [-0.09 + finger * 0.085, -0.13, -0.105], [1, 1, 1],
-      [0.28, 0, (finger - 1) * 0.16]);
+  const restY = -0.44;
+  const restZ = -0.84;
+
+  function makeHand() {
+    const hand = new THREE.Group();
+    addPart(hand, new THREE.CylinderGeometry(0.13, 0.17, 0.43, 9), sleeveMat,
+      [0.02, -0.31, 0.16], [1, 1, 0.9], [0.2, 0, -0.2]);
+    // Palm and curled fingers create a readable grip around the weapon.
+    addPart(hand, new THREE.SphereGeometry(0.16, 10, 8), gloveMat,
+      [0.015, -0.075, -0.015], [1.08, 0.78, 0.82]);
+    for (let finger = 0; finger < 3; finger++) {
+      addPart(hand, new THREE.CapsuleGeometry(0.043, 0.12, 3, 6), gloveMat,
+        [-0.09 + finger * 0.085, -0.13, -0.105], [1, 1, 1],
+        [0.28, 0, (finger - 1) * 0.16]);
+    }
+    addPart(hand, new THREE.CapsuleGeometry(0.05, 0.12, 3, 6), gloveMat,
+      [0.13, -0.045, -0.035], [1, 1, 1], [0.15, 0, -0.72]);
+    return hand;
   }
-  addPart(heldRoot, new THREE.CapsuleGeometry(0.05, 0.12, 3, 6), gloveMat,
-    [0.13, -0.045, -0.035], [1, 1, 1], [0.15, 0, -0.72]);
+
+  const rearHand = makeHand();
+  const frontHand = makeHand();
+  frontHand.scale.setScalar(0.88);
+  frontHand.rotation.y = 0.15;
+  heldRoot.add(rearHand, frontHand);
 
   const heldPlantSlot = new THREE.Group();
-  heldPlantSlot.position.set(-0.015, 0.035, -0.015);
   heldRoot.add(heldPlantSlot);
-  heldRoot.position.set(0.48, -0.46, -0.88);
+  heldRoot.position.set(0.44, restY, restZ);
   heldRoot.rotation.set(0.04, -0.12, -0.12);
   camera.add(heldRoot);
 
@@ -96,12 +221,14 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
 
   function updateHeldPlant() {
     heldPlantSlot.clear();
-    const model = makePlant(selected);
-    model.scale.setScalar(selected === "pumpkin" ? 0.42 : 0.34);
-    // Carry the plant diagonally across the lower-right view, with the flower head angled toward the center.
-    model.position.set(-0.02, -0.02, 0);
-    model.rotation.set(0.08, 0.12, 0.88);
+    const model = makeWeaponModel(selected);
     heldPlantSlot.add(model);
+    // Rear hand always wraps the grip near the origin; the front hand slides
+    // out to wherever is natural to support this particular weapon's barrel.
+    rearHand.position.set(0, 0, 0);
+    rearHand.rotation.set(0, 0, 0);
+    const grip = weaponGrip[selected];
+    frontHand.position.set(grip[0], grip[1], grip[2]);
   }
 
   function selectType(kind) {
@@ -133,22 +260,36 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     pickups.push({ root, kind, baseY: 0, phase: Math.random() * Math.PI * 2 });
   }
 
-  function growPlant(x, z, kind) {
-    if (plants.length >= 30) scene.remove(plants.shift());
-    const root = makePlant(kind);
-    root.position.set(x, 0.02, z);
-    root.scale.setScalar(0.08);
-    scene.add(root);
-    plants.push(root);
-    if (plantCountLabel) plantCountLabel.textContent = String(plants.length);
-    addPollenCloud(new THREE.Vector3(x, 0, z), kind);
-    showToast("Semente germinou: nuvem de pólen por alguns segundos!");
+  // A missed seed takes root here: it will not give you anything until you come
+  // back and harvest it with E. The longer it grows, the more it is worth.
+  function plantCrop(x, z, kind) {
+    if (growingCrops.length >= 22) {
+      const oldest = growingCrops.shift();
+      scene.remove(oldest.group);
+    }
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+    const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.07, 10), soilMat);
+    soil.position.y = 0.015;
+    soil.receiveShadow = true;
+    group.add(soil);
+    const ring = makeGrowthRing(kind);
+    group.add(ring);
+    const plantModel = makePlant(kind);
+    plantModel.position.y = 0.02;
+    plantModel.scale.setScalar(0.06);
+    group.add(plantModel);
+    scene.add(group);
+    growingCrops.push({ group, ring, plantModel, kind, growth: 0, ringDrawnAt: -1, matured: false });
+    if (plantCountLabel) plantCountLabel.textContent = String(growingCrops.length);
+    playPlant();
+    showToast("Semente plantada — volte com E quando crescer!");
   }
 
   function sowSeed() {
     if (seedCooldown > 0 || seeds.length > 18) return;
     if (inventory[selected] <= 0) {
-      showToast("Sem sementes desse tipo — procure uma planta para colher!");
+      showToast("Sem sementes desse tipo — colha uma plantação para repor!");
       return;
     }
     inventory[selected] -= 1;
@@ -169,25 +310,49 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     handMotion = 1;
   }
 
-  function interact(playerPosition) {
-    let nearest = null;
-    let nearestDistance = 3.25;
+  // Looks across both wild pickups and your own growing crops, and returns the
+  // nearest harvestable thing plus what harvesting it right now would be worth.
+  function nearestHarvestable(position) {
+    let best = null;
+    let bestKind = "pickup";
+    let bestDistance = 3.25;
     for (const pickup of pickups) {
-      const distance = Math.hypot(playerPosition.x - pickup.root.position.x, playerPosition.z - pickup.root.position.z);
-      if (distance < nearestDistance) {
-        nearest = pickup;
-        nearestDistance = distance;
-      }
+      const distance = Math.hypot(position.x - pickup.root.position.x, position.z - pickup.root.position.z);
+      if (distance < bestDistance) { bestDistance = distance; best = pickup; bestKind = "pickup"; }
     }
-    if (!nearest) {
-      showToast("Procure plantas brilhando pela fazenda para colher sementes.");
+    for (const crop of growingCrops) {
+      const distance = Math.hypot(position.x - crop.group.position.x, position.z - crop.group.position.z);
+      if (distance < bestDistance) { bestDistance = distance; best = crop; bestKind = "crop"; }
+    }
+    return best ? { target: best, kind: bestKind } : null;
+  }
+
+  function interact(playerPosition) {
+    const found = nearestHarvestable(playerPosition);
+    if (!found) {
+      showToast("Procure uma planta brilhando ou uma plantação crescida para colher.");
       return false;
     }
-    inventory[nearest.kind] += 4;
-    scene.remove(nearest.root);
-    pickups.splice(pickups.indexOf(nearest), 1);
+    if (found.kind === "crop") {
+      const crop = found.target;
+      const { amount, quality } = cropYield(crop);
+      inventory[crop.kind] += amount;
+      updateStock();
+      scene.remove(crop.group);
+      growingCrops.splice(growingCrops.indexOf(crop), 1);
+      if (plantCountLabel) plantCountLabel.textContent = String(growingCrops.length);
+      addPollenCloud(new THREE.Vector3(crop.group.position.x, 0.15, crop.group.position.z), crop.kind, quality);
+      playHarvest(quality);
+      showToast(`Você colheu ${descriptions[crop.kind].name}: +${amount} sementes!`);
+      return true;
+    }
+    const pickup = found.target;
+    inventory[pickup.kind] += 4;
+    scene.remove(pickup.root);
+    pickups.splice(pickups.indexOf(pickup), 1);
     updateStock();
-    showToast(`Você colheu ${descriptions[nearest.kind].name}: +4 sementes!`);
+    playHarvest(1);
+    showToast(`Você colheu ${descriptions[pickup.kind].name}: +4 sementes!`);
     return true;
   }
 
@@ -204,18 +369,55 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
     seedCooldown = Math.max(0, seedCooldown - delta);
     heldRoot.visible = active;
     const sway = Math.sin(elapsed * 2.3) * 0.018;
-    heldRoot.position.y = -0.43 + sway - handMotion * 0.045;
-    heldRoot.rotation.x = 0.08 + handMotion * 0.18;
+    const recoil = kindConfig[selected]?.recoilKick ?? 0.18;
+    heldRoot.position.y = restY + sway - handMotion * 0.045;
+    heldRoot.position.z = restZ + handMotion * 0.07;
+    heldRoot.rotation.x = 0.08 + handMotion * recoil;
     handMotion = Math.max(0, handMotion - delta * 3.8);
 
     for (const pickup of pickups) {
       pickup.root.position.y = pickup.baseY + Math.sin(elapsed * 2 + pickup.phase) * 0.12;
       pickup.root.rotation.y += delta * 0.55;
     }
-    for (const plant of plants) {
-      const target = Math.min(1, (plant.scale.x || 0.08) + delta * 0.45);
-      plant.scale.setScalar(target);
+
+    // Grow each planted crop toward maturity; the progress ring fills as a pie
+    // chart of how close it is, and a mature crop idles with a gentle pulse.
+    for (const crop of growingCrops) {
+      const config = kindConfig[crop.kind];
+      if (crop.growth < 1) {
+        crop.growth = Math.min(1, crop.growth + delta / config.growTime);
+        const eased = crop.growth * crop.growth * (3 - 2 * crop.growth);
+        crop.plantModel.scale.setScalar(0.06 + eased * (config.matureScale - 0.06));
+        if (Math.abs(crop.growth - crop.ringDrawnAt) > 0.025 || crop.growth >= 1) {
+          crop.ring.geometry.dispose();
+          crop.ring.geometry = new THREE.RingGeometry(0.4, 0.56, 24, 1, -Math.PI / 2, Math.max(0.001, crop.growth * Math.PI * 2));
+          crop.ringDrawnAt = crop.growth;
+        }
+        if (crop.growth >= 1) crop.matured = true;
+      } else {
+        const pulse = 1 + Math.sin(elapsed * 2.4 + crop.group.position.x) * 0.035;
+        crop.plantModel.scale.setScalar(config.matureScale * pulse);
+        crop.ring.material.opacity = 0.75 + Math.sin(elapsed * 2.4 + crop.group.position.x) * 0.2;
+      }
     }
+    if (readyCountLabel) readyCountLabel.textContent = String(growingCrops.filter(c => c.growth >= 1).length);
+
+    // On-screen harvest prompt: shows what E would give you right now, for
+    // both wild pickups and your own crops, so the choice to harvest early is informed.
+    const found = active ? nearestHarvestable(camera.position) : null;
+    if (harvestPrompt) {
+      harvestPrompt.classList.toggle("visible", !!found);
+      if (found && harvestPromptText) {
+        if (found.kind === "crop") {
+          const { amount } = cropYield(found.target);
+          const early = found.target.growth < 1 ? " · AINDA CRESCENDO" : "";
+          harvestPromptText.textContent = `COLHER ${descriptions[found.target.kind].name} · +${amount}${early}`;
+        } else {
+          harvestPromptText.textContent = `COLHER ${descriptions[found.target.kind].name} · +4`;
+        }
+      }
+    }
+
     for (let i = seeds.length - 1; i >= 0; i--) {
       const seed = seeds[i];
       seed.age += delta;
@@ -223,11 +425,21 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
       seed.mesh.position.addScaledVector(seed.velocity, delta);
       seed.mesh.rotation.x += delta * 5;
       seed.mesh.rotation.z += delta * 3;
+
+      // A direct hit on a farmer spends the seed instantly as pollen — no plant
+      // grows from it, mirroring "hit the target and there is no leftover seed".
+      if (tryDirectHit && seed.mesh.position.y < 2.5 && tryDirectHit(seed.mesh.position, seed.kind)) {
+        scene.remove(seed.mesh);
+        seeds.splice(i, 1);
+        playDirectHit();
+        continue;
+      }
+
       if (seed.mesh.position.y <= 0.12 || seed.age >= 4.4) {
         const x = THREE.MathUtils.clamp(seed.mesh.position.x, -75, 75);
         const z = THREE.MathUtils.clamp(seed.mesh.position.z, -75, 75);
         scene.remove(seed.mesh);
-        growPlant(x, z, seed.kind);
+        plantCrop(x, z, seed.kind);
         seeds.splice(i, 1);
       }
     }
@@ -235,5 +447,5 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud) 
 
   selectType("corn");
   updateStock();
-  return { update, throwSeed: sowSeed, sowSeed, selectType, interact, getPlantCount: () => plants.length };
+  return { update, throwSeed: sowSeed, sowSeed, selectType, interact, getPlantCount: () => growingCrops.length };
 }
