@@ -263,3 +263,5 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
 @media (max-height: 540px) {
   .seed-panel { top: 78px; transform: scale(.84); transform-origin: top left; }
 }
+
+/* Floating NPC transformation progress bars are rendered in the 3D world. */
