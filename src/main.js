@@ -3,7 +3,7 @@ import { createCompanionSystem } from "./companions.js";
 import { createSeedPlantSystem } from "./seed-plants.js";
 import { unlockAudio } from "./sound.js";
 
-// Farmers Field — prototype 008b
+// Farmers Field — prototype 009
 // Shotgun-Farmers-style sow/harvest loop, adapted to be nonviolent.
 // Procedural world, no copyrighted assets.
 
@@ -404,10 +404,16 @@ function showToast(message) {
   toastTimeout = window.setTimeout(() => toast.classList.remove("visible"), 2400);
 }
 
-const companionSystem = createCompanionSystem(scene, showToast);
+// Ordem de criação ajustada: seedPlantSystem primeiro (com referências
+// indiretas aos métodos do companion), depois o companion, que recebe
+// plantWeaponAt do seedPlantSystem para plantar armas reais no mundo.
+let companionSystem;
 const seedPlantSystem = createSeedPlantSystem(
-  scene, camera, showToast, companionSystem.addPollenCloud, companionSystem.tryDirectHit
+  scene, camera, showToast,
+  (...args) => companionSystem.addPollenCloud(...args),
+  (...args) => companionSystem.tryDirectHit(...args)
 );
+companionSystem = createCompanionSystem(scene, showToast, seedPlantSystem.plantCrop);
 
 function lockPointer() {
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
@@ -426,6 +432,8 @@ document.addEventListener("pointerlockchange", () => {
   if (isLocked) {
     pauseHint.classList.remove("visible");
     showToast("Welcome to Sunflower Valley");
+  } else {
+    seedPlantSystem.setAiming(false);
   }
 });
 
@@ -435,12 +443,13 @@ document.addEventListener("pointerlockerror", () => {
 
 document.addEventListener("mousemove", (event) => {
   if (!isLocked) return;
-  yaw -= event.movementX * 0.0021;
-  pitch -= event.movementY * 0.0021;
+  // Sensibilidade reduzida ao mirar (zoom da sniper).
+  const sensitivity = seedPlantSystem.isAiming() ? 0.00075 : 0.0021;
+  yaw -= event.movementX * sensitivity;
+  pitch -= event.movementY * sensitivity;
   pitch = THREE.MathUtils.clamp(pitch, -Math.PI / 2 + 0.08, Math.PI / 2 - 0.08);
 });
 
-// Mapeamento das 6 armas — 1..6
 const WEAPON_KEYS = {
   Digit1: "corn",
   Digit2: "sunflower",
@@ -465,8 +474,16 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("keyup", (event) => { keys[event.code] = false; });
 document.addEventListener("mousedown", (event) => {
   if (event.button === 0 && isLocked) seedPlantSystem.shoot();
+  if (event.button === 2 && isLocked) seedPlantSystem.setAiming(true);
 });
-window.addEventListener("blur", () => { for (const key of Object.keys(keys)) keys[key] = false; });
+document.addEventListener("mouseup", (event) => {
+  if (event.button === 2) seedPlantSystem.setAiming(false);
+});
+document.addEventListener("contextmenu", (event) => event.preventDefault());
+window.addEventListener("blur", () => {
+  for (const key of Object.keys(keys)) keys[key] = false;
+  seedPlantSystem.setAiming(false);
+});
 
 function animate() {
   const delta = Math.min(clock.getDelta(), 0.04);
