@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createCompanionSystem } from "./companions.js";
 
 // Farmers Field — prototype 001
 // This build focuses on the 3D farm environment and first-person movement.
@@ -411,6 +412,8 @@ function showToast(message) {
   toastTimeout = window.setTimeout(() => toast.classList.remove("visible"), 2400);
 }
 
+const companionSystem = createCompanionSystem(scene, showToast);
+
 function lockPointer() {
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
 }
@@ -459,6 +462,7 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.04);
   const elapsed = clock.elapsedTime;
   if (isLocked) updatePlayer(delta);
+  companionSystem.update(delta, camera.position, keys, isLocked);
   clouds.forEach((cloud, index) => {
     cloud.position.x += delta * (0.3 + index * 0.07);
     if (cloud.position.x > 115) cloud.position.x = -115;
