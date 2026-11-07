@@ -22,6 +22,9 @@ scene.fog = new THREE.Fog(0xb8d4d8, 52, 155);
 const camera = new THREE.PerspectiveCamera(76, window.innerWidth / window.innerHeight, 0.1, 260);
 camera.rotation.order = "YXZ";
 camera.position.set(0, 1.72, 27);
+// IMPORTANTE: sem isto, objetos adicionados como filhos da câmera
+// (armas e mãos do sistema de seed-plants) não são renderizados!
+scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
