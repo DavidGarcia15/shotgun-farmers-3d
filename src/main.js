@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { createCompanionSystem } from "./companions.js";
 
-// Farmers Field — prototype 001
-// This build focuses on the 3D farm environment and first-person movement.
+// Farmers Field — prototype 002
+// First-person farm exploration with friendly NPC companions and seedling growth.
 // The world is built from procedural geometry, so no copyrighted game assets are used.
 
 const canvas = document.querySelector("#game-canvas");
