@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { 
   playPlant, playDirectHit, playHarvest, 
-  playCornShot, playSunflowerShot, playPumpkinShot, playReload 
+  playCornShot, playSunflowerShot, playPumpkinShot,
+  playPeavolverShot, playHayK47Shot, playWatermeLMGShot,
+  playReload 
 } from "./sound.js";
 
 // Shotgun-Farmers-style loop: each plant weapon has its own clip.
@@ -11,6 +13,7 @@ import {
 
 const palette = {
   corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239,
+  peavolver: 0x6ab04c, hayk47: 0xd4a843, watermelon: 0x2e7d32,
   leaf: 0x5d9149, leafLight: 0x8fb85c, stem: 0x48753c,
 };
 
@@ -36,8 +39,30 @@ const weaponInfo = {
     clipSize: 1, growTime: 18, minYield: 1, maxYield: 2,
     matureScale: 0.62, recoilKick: 0.32, shotSound: playPumpkinShot,
   },
+  peavolver: {
+    name: "PEAVOLVER",
+    ability: "PÓLEN RÁPIDO",
+    detail: "Revólver de ervilha. Tiro rápido e leve; bom para curta distância.",
+    clipSize: 6, growTime: 8, minYield: 2, maxYield: 5,
+    matureScale: 0.5, recoilKick: 0.15, shotSound: playPeavolverShot,
+  },
+  hayk47: {
+    name: "HAYK-47",
+    ability: "PÓLEN CONSTANTE",
+    detail: "Rifle de feno. Rajada estável e precisa; médio alcance.",
+    clipSize: 4, growTime: 14, minYield: 1, maxYield: 4,
+    matureScale: 0.6, recoilKick: 0.2, shotSound: playHayK47Shot,
+  },
+  watermelon: {
+    name: "WATERMELMG",
+    ability: "PÓLEN PESADO",
+    detail: "Metralhadora de melancia. Cadência alta e pente grande; lenta.",
+    clipSize: 8, growTime: 20, minYield: 2, maxYield: 5,
+    matureScale: 0.65, recoilKick: 0.25, shotSound: playWatermeLMGShot,
+  },
 };
 
+// --- Rich materials ---
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
 const woodMat = mat(0x6b4a2e, { roughness: 0.95 });
 const darkWoodMat = mat(0x4a3320, { roughness: 0.95 });
@@ -46,6 +71,12 @@ const darkMetalMat = mat(0x3a3a3a, { roughness: 0.5, metalness: 0.6 });
 const goldMat = mat(0xf3d96a, { roughness: 0.5, emissive: 0x3a2e10 });
 const huskMat = mat(0xa8853a, { roughness: 1 });
 const shellMat = mat(0xc44a32, { roughness: 0.55, metalness: 0.3 });
+const peaMat = mat(0x6ab04c, { roughness: 0.7 });
+const hayMat = mat(0xd4a843, { roughness: 1 });
+const ropeMat = mat(0x8b6b3d, { roughness: 1 });
+const watermelonRindMat = mat(0x2e7d32, { roughness: 0.6 });
+const watermelonFleshMat = mat(0xe94560, { roughness: 0.7, emissive: 0x3a0a12 });
+const seedMat = mat(0x2b2b2b, { roughness: 0.9 });
 const lensMat = new THREE.MeshStandardMaterial({
   color: 0x88ccee, roughness: 0.1, metalness: 0.9, emissive: 0x224466, emissiveIntensity: 0.6,
 });
@@ -62,6 +93,7 @@ function addPart(root, geometry, material, position, scale = [1, 1, 1], rotation
   return mesh;
 }
 
+// --- World plant models ---
 function makePlant(kind) {
   const root = new THREE.Group();
   const stem = mat(palette.stem);
@@ -79,18 +111,45 @@ function makePlant(kind) {
       addPart(root, new THREE.SphereGeometry(0.18, 8, 6), mat(palette.sunflower), [Math.cos(a) * 0.34, 1.62 + Math.sin(a) * 0.34, 0], [0.75, 1.1, 0.55]);
     }
     addPart(root, new THREE.SphereGeometry(0.27, 10, 8), mat(0x65452d), [0, 1.62, 0.03]);
-  } else {
+  } else if (kind === "pumpkin") {
     addPart(root, new THREE.SphereGeometry(0.56, 12, 9), mat(palette.pumpkin), [0, 0.5, 0], [1.1, 0.9, 1]);
     addPart(root, new THREE.CylinderGeometry(0.04, 0.06, 0.25, 6), stem, [0, 1.05, 0]);
     addPart(root, new THREE.SphereGeometry(0.25, 8, 6), light, [0.3, 0.98, 0], [1, 0.18, 0.5]);
+  } else if (kind === "peavolver") {
+    // A small pea plant with visible pods
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.08, 1.2, 6), stem, [0, 0.6, 0]);
+    for (const side of [-1, 1]) addPart(root, new THREE.SphereGeometry(0.22, 8, 6), leaf, [side * 0.22, 0.45, 0], [0.9, 0.18, 0.4]);
+    for (let i = 0; i < 3; i++) {
+      addPart(root, new THREE.CapsuleGeometry(0.06, 0.25, 3, 6), peaMat, [0.15, 0.8 + i * 0.15, 0], [1, 1, 1], [0, 0, 0.2]);
+    }
+    addPart(root, new THREE.SphereGeometry(0.12, 8, 6), light, [0, 1.15, 0]);
+  } else if (kind === "hayk47") {
+    // A bundle of hay stalks tied together
+    for (let i = 0; i < 5; i++) {
+      addPart(root, new THREE.CylinderGeometry(0.03, 0.03, 1.4, 4), hayMat, [(i - 2) * 0.1, 0.7, 0]);
+    }
+    addPart(root, new THREE.CylinderGeometry(0.25, 0.25, 0.1, 8), ropeMat, [0, 0.5, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.25, 0.25, 0.1, 8), ropeMat, [0, 1.0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.15, 6, 4), hayMat, [0, 1.4, 0]);
+  } else { // watermelon
+    addPart(root, new THREE.SphereGeometry(0.6, 12, 9), watermelonRindMat, [0, 0.55, 0], [1.2, 0.9, 1]);
+    // Dark stripes
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      addPart(root, new THREE.BoxGeometry(0.03, 0.8, 0.03), mat(0x1b5e20), [Math.cos(a) * 0.55, 0.55, Math.sin(a) * 0.55], [1, 1, 1], [0, 0, a]);
+    }
+    addPart(root, new THREE.CylinderGeometry(0.06, 0.08, 0.2, 6), stem, [0, 1.1, 0]);
+    addPart(root, new THREE.SphereGeometry(0.2, 8, 6), light, [0.4, 0.8, 0], [0.8, 0.18, 0.5]);
   }
   return root;
 }
 
+// --- Detailed first-person weapon models ---
 function makeWeaponModel(kind) {
   const root = new THREE.Group();
 
   if (kind === "corn") {
+    // --- Corn Double-Barrel Shotgun ---
     for (const side of [-1, 1]) {
       addPart(root, new THREE.CylinderGeometry(0.075, 0.085, 0.75, 10), mat(palette.corn),
         [side * 0.075, 0.03, -0.37], [1, 1, 1], [-Math.PI / 2, 0, 0]);
@@ -119,6 +178,7 @@ function makeWeaponModel(kind) {
         [0.12, 0, 0.05 + i * 0.08], [1, 1, 1], [0, 0, Math.PI / 2]);
     }
   } else if (kind === "sunflower") {
+    // --- Sunflower Sniper Rifle ---
     addPart(root, new THREE.CylinderGeometry(0.035, 0.045, 1.0, 10), mat(palette.stem),
       [0, 0.02, -0.55], [1, 1, 1], [-Math.PI / 2, 0, 0]);
     addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.08, 10), darkMetalMat,
@@ -151,7 +211,8 @@ function makeWeaponModel(kind) {
       addPart(root, new THREE.CylinderGeometry(0.008, 0.008, 0.15, 4), metalMat,
         [side * 0.06, -0.05, -0.65], [1, 1, 1], [0.5, 0, side * 0.2]);
     }
-  } else {
+  } else if (kind === "pumpkin") {
+    // --- Pumpkin Grenade Launcher ---
     addPart(root, new THREE.SphereGeometry(0.22, 14, 10), mat(palette.pumpkin),
       [0, 0, -0.2], [1.05, 0.95, 1.05]);
     for (let i = 0; i < 8; i++) {
@@ -179,15 +240,127 @@ function makeWeaponModel(kind) {
       addPart(root, new THREE.SphereGeometry(0.04, 6, 4), mat(palette.leafLight),
         [side * 0.15, 0.15, -0.35], [0.3, 0.8, 1.4]);
     }
+  } else if (kind === "peavolver") {
+    // --- Peavolver (Pea Revolver) ---
+    // Main body: a large pea pod
+    addPart(root, new THREE.CapsuleGeometry(0.09, 0.35, 4, 8), peaMat,
+      [0, 0.02, -0.15], [1, 1.1, 1], [0, 0, Math.PI / 2]);
+    // Cylinder with peas
+    addPart(root, new THREE.CylinderGeometry(0.11, 0.11, 0.18, 8), darkMetalMat,
+      [0, 0.02, 0.02], [1, 1, 1], [0, 0, Math.PI / 2]);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      addPart(root, new THREE.SphereGeometry(0.04, 6, 5), peaMat,
+        [Math.cos(a) * 0.09, 0.02 + Math.sin(a) * 0.09, 0.02], [1, 1, 1]);
+    }
+    // Barrel
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.045, 0.4, 8), peaMat,
+      [0, 0.02, -0.45], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.04, 8), darkMetalMat,
+      [0, 0.02, -0.66], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Grip (a curved stem)
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.2, 6), woodMat,
+      [0, -0.12, 0.12], [1, 1, 1], [0.4, 0, 0]);
+    // Trigger guard
+    addPart(root, new THREE.TorusGeometry(0.035, 0.01, 6, 10), darkMetalMat,
+      [0, -0.07, 0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.012, 0.04, 0.012), metalMat, [0, -0.05, 0.08]);
+    // Pea decorations on the side
+    for (let i = 0; i < 3; i++) {
+      addPart(root, new THREE.SphereGeometry(0.025, 5, 4), light,
+        [0.1, 0.05 + i * 0.04, -0.1 - i * 0.05]);
+    }
+  } else if (kind === "hayk47") {
+    // --- HayK-47 (Hay Assault Rifle) ---
+    // Main body: a hay bale wrapped in rope
+    addPart(root, new THREE.BoxGeometry(0.18, 0.16, 0.5), hayMat, [0, 0, -0.2]);
+    // Rope wrappings
+    for (let i = 0; i < 4; i++) {
+      addPart(root, new THREE.TorusGeometry(0.11, 0.012, 4, 8), ropeMat,
+        [0, 0, -0.05 - i * 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    }
+    // Barrel (rolled hay)
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.6, 8), hayMat,
+      [0, 0.02, -0.6], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.06, 8), darkMetalMat,
+      [0, 0.02, -0.91], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Stock (hay)
+    addPart(root, new THREE.BoxGeometry(0.12, 0.14, 0.35), hayMat, [0, -0.02, 0.22]);
+    // Magazine (small hay bale)
+    addPart(root, new THREE.BoxGeometry(0.08, 0.18, 0.1), hayMat, [0, -0.16, -0.1]);
+    addPart(root, new THREE.TorusGeometry(0.06, 0.008, 4, 8), ropeMat,
+      [0, -0.16, -0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    // Grip
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.18, 6), ropeMat,
+      [0, -0.12, 0.08], [1, 1, 1], [0.4, 0, 0]);
+    // Trigger guard
+    addPart(root, new THREE.TorusGeometry(0.035, 0.01, 6, 10), darkMetalMat,
+      [0, -0.07, 0.04], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.012, 0.04, 0.012), metalMat, [0, -0.05, 0.04]);
+    // Loose hay strands
+    for (let i = 0; i < 6; i++) {
+      const a = Math.random() * Math.PI * 2;
+      addPart(root, new THREE.CylinderGeometry(0.005, 0.005, 0.1, 3), hayMat,
+        [Math.cos(a) * 0.15, Math.random() * 0.1, -0.1 - Math.random() * 0.3], [1, 1, 1], [Math.random(), Math.random(), Math.random()]);
+    }
+  } else if (kind === "watermelon") {
+    // --- WatermeLMG (Watermelon Machine Gun) ---
+    // Main body: a large watermelon
+    addPart(root, new THREE.SphereGeometry(0.28, 14, 10), watermelonRindMat,
+      [0, 0, -0.25], [1.1, 1, 1.1]);
+    // Dark stripes
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addPart(root, new THREE.BoxGeometry(0.025, 0.5, 0.025), mat(0x1b5e20),
+        [Math.cos(a) * 0.27, 0, -0.25 + Math.sin(a) * 0.27], [1, 1, 1], [0, 0, a]);
+    }
+    // Exposed flesh (where the barrel exits)
+    addPart(root, new THREE.SphereGeometry(0.15, 10, 8), watermelonFleshMat,
+      [0, 0, -0.5], [1, 0.9, 0.5]);
+    // Seeds on the flesh
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addPart(root, new THREE.SphereGeometry(0.015, 5, 4), seedMat,
+        [Math.cos(a) * 0.1, Math.sin(a) * 0.08, -0.56], [1, 1, 1]);
+    }
+    // Barrel
+    addPart(root, new THREE.CylinderGeometry(0.06, 0.07, 0.5, 10), darkMetalMat,
+      [0, 0, -0.75], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.08, 0.08, 0.06, 10), metalMat,
+      [0, 0, -1.0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Bipod (made of vine stems)
+    for (const side of [-1, 1]) {
+      addPart(root, new THREE.CylinderGeometry(0.015, 0.02, 0.25, 5), mat(palette.stem),
+        [side * 0.15, -0.2, -0.65], [1, 1, 1], [0.3, 0, side * 0.4]);
+    }
+    // Stock (a curved vine)
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.06, 0.4, 6), woodMat,
+      [0, -0.1, 0.2], [1, 1, 1], [0.3, 0, 0]);
+    // Grip
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.055, 0.2, 6), woodMat,
+      [0, -0.2, 0.05], [1, 1, 1], [0.4, 0, 0]);
+    // Trigger guard
+    addPart(root, new THREE.TorusGeometry(0.04, 0.01, 6, 10), darkMetalMat,
+      [0, -0.15, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.015, 0.05, 0.015), metalMat, [0, -0.13, 0.02]);
+    // Leaf sights
+    for (const side of [-1, 1]) {
+      addPart(root, new THREE.SphereGeometry(0.05, 6, 4), mat(palette.leafLight),
+        [side * 0.2, 0.2, -0.4], [0.3, 0.8, 1.4]);
+    }
   }
 
   return root;
 }
 
+// Front (support) hand grip positions.
 const weaponGrip = {
   corn: [0, -0.02, -0.3],
   sunflower: [0, -0.02, -0.5],
   pumpkin: [0, -0.15, -0.1],
+  peavolver: [0, -0.02, -0.25],
+  hayk47: [0, -0.02, -0.4],
+  watermelon: [0, -0.1, -0.3],
 };
 
 function makeGrowthRing(kind) {
@@ -222,7 +395,7 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   const growingCrops = [];
   const projectiles = [];
   const pickups = [];
-  const ammo = { corn: 6, sunflower: 2, pumpkin: 1 };
+  const ammo = { corn: 6, sunflower: 2, pumpkin: 1, peavolver: 3, hayk47: 4, watermelon: 2 };
 
   let selected = "corn";
   let shotCooldown = 0;
@@ -232,10 +405,6 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   let reloadActive = false;
   let reloadProgress = 0;
 
-  // === Ajustes de visibilidade da arma ===
-  // restY subiu de -0.44 para -0.30 (arma mais alta na tela)
-  // restZ desceu de -0.84 para -0.62 (arma mais próxima da câmera)
-  // restX mudou de 0.44 para 0.32 (arma menos colada na borda direita)
   const heldRoot = new THREE.Group();
   const sleeveMat = mat(0x557c54);
   const gloveMat = mat(0xc49a72);
@@ -269,8 +438,6 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   heldRoot.add(heldPlantSlot);
   heldRoot.position.set(restX, restY, restZ);
   heldRoot.rotation.set(0.06, -0.14, -0.08);
-  // Importante: as armas precisam renderizar por cima da cena para não
-  // serem cortadas por objetos próximos (paredes, etc).
   heldRoot.renderOrder = 999;
   heldPlantSlot.renderOrder = 999;
   camera.add(heldRoot);
@@ -285,7 +452,8 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   }
 
   function updateStock() {
-    if (stockLabel) stockLabel.textContent = `🌽 ${ammo.corn}  🌻 ${ammo.sunflower}  🎃 ${ammo.pumpkin}`;
+    if (stockLabel) stockLabel.textContent =
+      `🌽 ${ammo.corn}  🌻 ${ammo.sunflower}  🎃 ${ammo.pumpkin}  🫛 ${ammo.peavolver}  🌾 ${ammo.hayk47}  🍉 ${ammo.watermelon}`;
   }
 
   function updateHeldPlant() {
@@ -441,12 +609,16 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
     return true;
   }
 
+  // Scattered pickups for all six varieties
   makePickup("corn", -3, -14);
   makePickup("sunflower", 22, -28);
   makePickup("pumpkin", 35, -7);
   makePickup("corn", -19, 13);
   makePickup("sunflower", 44, -43);
   makePickup("pumpkin", -43, -2);
+  makePickup("peavolver", 10, 5);
+  makePickup("hayk47", -12, 30);
+  makePickup("watermelon", 5, -50);
 
   function update(delta, active = false) {
     elapsed += delta;
