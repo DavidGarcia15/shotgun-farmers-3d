@@ -3,7 +3,7 @@ import { createCompanionSystem } from "./companions.js";
 import { createSeedPlantSystem } from "./seed-plants.js";
 import { unlockAudio } from "./sound.js";
 
-// Farmers Field — prototype 007
+// Farmers Field — prototype 008b
 // Shotgun-Farmers-style sow/harvest loop, adapted to be nonviolent.
 // Procedural world, no copyrighted assets.
 
@@ -22,8 +22,6 @@ scene.fog = new THREE.Fog(0xb8d4d8, 52, 155);
 const camera = new THREE.PerspectiveCamera(76, window.innerWidth / window.innerHeight, 0.1, 260);
 camera.rotation.order = "YXZ";
 camera.position.set(0, 1.72, 27);
-// IMPORTANTE: sem isto, objetos adicionados como filhos da câmera
-// (armas e mãos do sistema de seed-plants) não são renderizados!
 scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -442,11 +440,19 @@ document.addEventListener("mousemove", (event) => {
   pitch = THREE.MathUtils.clamp(pitch, -Math.PI / 2 + 0.08, Math.PI / 2 - 0.08);
 });
 
+// Mapeamento das 6 armas — 1..6
+const WEAPON_KEYS = {
+  Digit1: "corn",
+  Digit2: "sunflower",
+  Digit3: "pumpkin",
+  Digit4: "peavolver",
+  Digit5: "hayk47",
+  Digit6: "watermelon",
+};
+
 document.addEventListener("keydown", (event) => {
   keys[event.code] = true;
-  if (event.code === "Digit1") seedPlantSystem.selectType("corn");
-  if (event.code === "Digit2") seedPlantSystem.selectType("sunflower");
-  if (event.code === "Digit3") seedPlantSystem.selectType("pumpkin");
+  if (WEAPON_KEYS[event.code]) seedPlantSystem.selectType(WEAPON_KEYS[event.code]);
   if (event.code === "KeyE" && !event.repeat && isLocked) seedPlantSystem.interact(camera.position);
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
   if (event.code === "Space" && grounded && isLocked) {
