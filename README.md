@@ -1,6 +1,6 @@
 # Farmers Field — 3D Prototype
 
-A browser-based 3D first-person farm prototype inspired by the playful farm-shooter genre. This is an original project: the environment is generated with procedural geometry and does not use assets or source code from Shotgun Farmers.
+A browser-based 3D first-person farm exploration prototype inspired by the playful look and plant-growth ideas of farm arcade games. This is an original, nonviolent project: the environment is generated with procedural geometry and does not use assets or source code from Shotgun Farmers.
 
 ## Prototype 001
 
@@ -40,11 +40,11 @@ To publish the prototype, open the repository's **Settings → Pages**, choose *
 ## Roadmap
 
 1. Environment and first-person movement.
-2. Seed projectile and plant-growth system.
-3. Original vegetable-inspired weapons and feedback.
-4. Training targets and bot opponents.
-5. Match flow, scoring, audio, and polish.
-6. Online multiplayer architecture.
+2. Seed planting and crop-growth interactions.
+3. Garden tools, watering, and harvest feedback.
+4. Friendly farm characters and cooperative field challenges.
+5. Match flow, scoring, audio, and visual polish.
+6. Optional online cooperative play.
 
 ## Tech
 
