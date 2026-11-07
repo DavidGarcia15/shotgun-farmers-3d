@@ -452,6 +452,7 @@ document.addEventListener("keydown", (event) => {
   if (event.code === "Digit1") seedPlantSystem.selectType("corn");
   if (event.code === "Digit2") seedPlantSystem.selectType("sunflower");
   if (event.code === "Digit3") seedPlantSystem.selectType("pumpkin");
+  if (event.code === "KeyE" && !event.repeat && isLocked) seedPlantSystem.interact(camera.position);
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
   if (event.code === "Space" && grounded && isLocked) {
     verticalVelocity = 7.2;
@@ -462,7 +463,7 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => { keys[event.code] = false; });
 document.addEventListener("mousedown", (event) => {
-  if (event.button === 0 && isLocked) seedPlantSystem.throwSeed();
+  if (event.button === 0 && isLocked) seedPlantSystem.sowSeed();
 });
 window.addEventListener("blur", () => { for (const key of Object.keys(keys)) keys[key] = false; });
 
