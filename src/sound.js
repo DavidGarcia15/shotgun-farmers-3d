@@ -76,7 +76,6 @@ export function playCornShot() {
   const audio = getContext();
   if (!audio) return;
   const t = audio.currentTime;
-  // Deep boom + scattered pellets
   tone(180, t, 0.12, { type: "square", gain: 0.09, slideTo: 90 });
   tone(320, t + 0.02, 0.1, { type: "triangle", gain: 0.06 });
   tone(620, t + 0.04, 0.06, { type: "sawtooth", gain: 0.03, slideTo: 400 });
@@ -86,7 +85,6 @@ export function playSunflowerShot() {
   const audio = getContext();
   if (!audio) return;
   const t = audio.currentTime;
-  // Sharp crack + high tail
   tone(1200, t, 0.05, { type: "sawtooth", gain: 0.08, slideTo: 400 });
   tone(800, t + 0.02, 0.07, { type: "triangle", gain: 0.05 });
   tone(1600, t + 0.04, 0.15, { type: "sine", gain: 0.02, slideTo: 2200 });
@@ -96,24 +94,49 @@ export function playPumpkinShot() {
   const audio = getContext();
   if (!audio) return;
   const t = audio.currentTime;
-  // Heavy thump + whoosh
   tone(90, t, 0.22, { type: "sine", gain: 0.11, slideTo: 35 });
   tone(220, t + 0.05, 0.18, { type: "triangle", gain: 0.07, slideTo: 110 });
   tone(440, t + 0.1, 0.12, { type: "sawtooth", gain: 0.03, slideTo: 200 });
 }
 
-// --- Improved mechanical reload: clicks, slide, final lock ---
+// Peavolver: sharp, light "pop" with a quick pea-like tail
+export function playPeavolverShot() {
+  const audio = getContext();
+  if (!audio) return;
+  const t = audio.currentTime;
+  tone(900, t, 0.04, { type: "triangle", gain: 0.07, slideTo: 1400 });
+  tone(600, t + 0.02, 0.05, { type: "sine", gain: 0.05, slideTo: 300 });
+  tone(1200, t + 0.05, 0.03, { type: "square", gain: 0.03 });
+}
+
+// HayK-47: mid-range burst, crunchy hay-like texture
+export function playHayK47Shot() {
+  const audio = getContext();
+  if (!audio) return;
+  const t = audio.currentTime;
+  tone(280, t, 0.06, { type: "sawtooth", gain: 0.08, slideTo: 180 });
+  tone(450, t + 0.01, 0.05, { type: "square", gain: 0.05 });
+  tone(700, t + 0.03, 0.04, { type: "triangle", gain: 0.04, slideTo: 500 });
+  tone(350, t + 0.06, 0.03, { type: "sawtooth", gain: 0.03 });
+}
+
+// WatermeLMG: heavy, juicy thump with a deep tail
+export function playWatermeLMGShot() {
+  const audio = getContext();
+  if (!audio) return;
+  const t = audio.currentTime;
+  tone(120, t, 0.18, { type: "sine", gain: 0.1, slideTo: 60 });
+  tone(260, t + 0.04, 0.12, { type: "triangle", gain: 0.06, slideTo: 130 });
+  tone(520, t + 0.08, 0.08, { type: "sawtooth", gain: 0.03, slideTo: 250 });
+}
 
 export function playReload() {
   const audio = getContext();
   if (!audio) return;
   const t = audio.currentTime;
-  // First click (release)
   tone(200, t, 0.035, { type: "square", gain: 0.07 });
   tone(480, t + 0.04, 0.03, { type: "square", gain: 0.05 });
-  // Slide / insertion sound
   tone(320, t + 0.15, 0.08, { type: "triangle", gain: 0.055, slideTo: 520 });
-  // Lock click
   tone(680, t + 0.32, 0.045, { type: "square", gain: 0.07 });
   tone(920, t + 0.37, 0.04, { type: "sine", gain: 0.04 });
-    }
+                             }
