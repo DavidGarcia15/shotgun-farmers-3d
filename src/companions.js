@@ -3,30 +3,42 @@ import { playTransform } from "./sound.js";
 
 // Friendly farm companions: nearby farmers can be invited to help.
 // After joining, each becomes a small animal helper that wanders and plants
-// decorative crops around the field. There is no combat or damage system —
-// a farmer's bar fills from pollen instead of draining from harm.
+// REAL weapon crops around the field (using the seedPlantSystem's plantCrop).
+// There is no combat or damage system — a farmer's bar fills from pollen.
 
 const makeMaterial = (color, roughness = 0.88) =>
   new THREE.MeshStandardMaterial({ color, roughness });
 
 const mats = {
   skin: makeMaterial(0xd9a77c),
-  shirt: makeMaterial(0x557c54),
-  shirtAlt: makeMaterial(0x9a7049),
+  skinShade: makeMaterial(0xb98a63),
+  nose: makeMaterial(0xc78a6a),
+  shirtA: makeMaterial(0x557c54),
+  shirtB: makeMaterial(0x9a7049),
+  shirtC: makeMaterial(0x8a4646),
+  shirtDetail: makeMaterial(0x3a4d38),
   trousers: makeMaterial(0x3e4a43),
-  hat: makeMaterial(0x8a653e),
+  trousersDark: makeMaterial(0x2a3330),
+  boot: makeMaterial(0x4a3020),
+  hat: makeMaterial(0xb98e4a),
+  hatBand: makeMaterial(0x5a3e22),
   dark: makeMaterial(0x352f28),
+  hair: makeMaterial(0x4a3020),
+  mustache: makeMaterial(0x3a2418),
   fur: makeMaterial(0x9a7049),
+  furDark: makeMaterial(0x6a4a2c),
   furLight: makeMaterial(0xc49a6b),
+  furCream: makeMaterial(0xd9be95),
   rabbit: makeMaterial(0xe2ddd0),
+  rabbitShade: makeMaterial(0xc9c2b0),
   rabbitPink: makeMaterial(0xc98782),
   chicken: makeMaterial(0xf0e2b6),
+  chickenShade: makeMaterial(0xd6c394),
+  chickenComb: makeMaterial(0xd94a3a),
   beak: makeMaterial(0xe4a63d),
-  leaf: makeMaterial(0x548a45),
-  leafLight: makeMaterial(0x83ad53),
-  flower: makeMaterial(0xe9c65b),
-  flowerAlt: makeMaterial(0xe6a2a0),
-  soil: makeMaterial(0x76523b),
+  beakShade: makeMaterial(0xc98a26),
+  eyeWhite: makeMaterial(0xf6f0dc),
+  eyeBlack: makeMaterial(0x1a1a1a),
 };
 
 const sphere = (parent, material, position, scale, geometry = [0.5, 12, 9]) => {
@@ -48,107 +60,242 @@ const box = (parent, material, position, size) => {
   return mesh;
 };
 
+const cyl = (parent, material, position, rTop, rBot, h, seg = 8) => {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, seg), material);
+  mesh.position.set(...position);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+};
+
+// =========================================================
+// === FARMERS — mais detalhados (bigode, suspensórios, botas)
+// =========================================================
 function makeFarmer(variant = 0) {
   const group = new THREE.Group();
-  const shirt = variant % 2 ? mats.shirtAlt : mats.shirt;
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.65, 4, 8), shirt);
-  body.position.y = 1.23;
-  body.castShadow = true;
-  group.add(body);
-  sphere(group, mats.skin, [0, 2.05, 0], [0.31, 0.34, 0.3]);
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.08, 12), mats.hat);
-  brim.position.y = 2.36;
-  brim.castShadow = true;
-  group.add(brim);
-  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.31, 10), mats.hat);
-  crown.position.y = 2.53;
-  crown.castShadow = true;
-  group.add(crown);
+  const shirt = [mats.shirtA, mats.shirtB, mats.shirtC][variant % 3];
+
+  // Pernas + botas
   for (const side of [-1, 1]) {
     const leg = box(group, mats.trousers, [side * 0.16, 0.42, 0], [0.2, 0.68, 0.23]);
     leg.rotation.z = side * -0.035;
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.52, 3, 6), shirt);
+    // Bota
+    box(group, mats.boot, [side * 0.16, 0.05, 0.06], [0.22, 0.16, 0.32]);
+    box(group, mats.boot, [side * 0.16, 0.14, -0.02], [0.2, 0.12, 0.22]);
+  }
+
+  // Corpo (camisa)
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.65, 4, 10), shirt);
+  body.position.y = 1.23;
+  body.castShadow = true;
+  group.add(body);
+
+  // Suspensórios (tiras escuras na frente)
+  for (const side of [-1, 1]) {
+    box(group, mats.shirtDetail, [side * 0.18, 1.35, -0.29], [0.06, 0.55, 0.02]);
+  }
+  // Botões
+  for (let i = 0; i < 3; i++) {
+    sphere(group, mats.shirtDetail, [0, 1.15 - i * 0.15, -0.32], [0.03, 0.03, 0.02]);
+  }
+
+  // Cabeça
+  sphere(group, mats.skin, [0, 2.05, 0], [0.31, 0.34, 0.3]);
+  // Orelhas
+  for (const side of [-1, 1]) {
+    sphere(group, mats.skin, [side * 0.3, 2.05, 0], [0.06, 0.09, 0.05]);
+  }
+  // Nariz
+  sphere(group, mats.nose, [0, 1.98, -0.31], [0.055, 0.05, 0.06]);
+
+  // Olhos (com pupilas)
+  for (const side of [-1, 1]) {
+    sphere(group, mats.eyeWhite, [side * 0.1, 2.1, -0.28], [0.045, 0.055, 0.03]);
+    sphere(group, mats.eyeBlack, [side * 0.1, 2.1, -0.305], [0.025, 0.032, 0.015]);
+  }
+  // Sobrancelhas
+  for (const side of [-1, 1]) {
+    const brow = box(group, mats.hair, [side * 0.1, 2.2, -0.29], [0.09, 0.02, 0.02]);
+    brow.rotation.z = side * 0.1;
+  }
+  // Bigode (variant-dependent)
+  if (variant % 2 === 0) {
+    box(group, mats.mustache, [0, 1.88, -0.31], [0.18, 0.05, 0.03]);
+    box(group, mats.mustache, [-0.1, 1.86, -0.31], [0.05, 0.04, 0.03]);
+    box(group, mats.mustache, [0.1, 1.86, -0.31], [0.05, 0.04, 0.03]);
+  } else {
+    // Barba
+    sphere(group, mats.hair, [0, 1.83, -0.28], [0.28, 0.15, 0.15]);
+  }
+
+  // Cabelo (lateral + topo)
+  sphere(group, mats.hair, [0, 2.28, 0.06], [0.32, 0.16, 0.32]);
+
+  // Chapéu de palha
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 16), mats.hat);
+  brim.position.y = 2.37;
+  brim.castShadow = true;
+  group.add(brim);
+  // Faixa do chapéu
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.06, 14), mats.hatBand);
+  band.position.y = 2.42;
+  band.castShadow = true;
+  group.add(band);
+  // Copo do chapéu
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.31, 12), mats.hat);
+  crown.position.y = 2.55;
+  crown.castShadow = true;
+  group.add(crown);
+  // Topo do chapéu
+  sphere(group, mats.hat, [0, 2.71, 0], [0.28, 0.05, 0.28], [0.5, 10, 6]);
+
+  // Braços (com mãos)
+  for (const side of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.52, 3, 8), shirt);
     arm.position.set(side * 0.43, 1.33, 0);
     arm.rotation.z = side * -0.22;
     arm.castShadow = true;
     group.add(arm);
+    // Mão
+    sphere(group, mats.skin, [side * 0.52, 1.05, 0], [0.1, 0.11, 0.1]);
   }
-  sphere(group, mats.dark, [-0.105, 2.08, -0.27], [0.035, 0.045, 0.025]);
-  sphere(group, mats.dark, [0.105, 2.08, -0.27], [0.035, 0.045, 0.025]);
+
   return group;
 }
 
+// =========================================================
+// === ANIMALS — muito mais detalhados
+// =========================================================
 function makeAnimal(kind) {
   const group = new THREE.Group();
   if (kind === "capybara") {
+    // Corpo principal
     sphere(group, mats.fur, [0, 0.58, 0.08], [0.72, 0.53, 0.48]);
+    // Barriga mais clara
+    sphere(group, mats.furLight, [0, 0.38, 0.08], [0.6, 0.28, 0.4]);
+    // Cabeça
     sphere(group, mats.furLight, [0, 0.78, -0.43], [0.39, 0.36, 0.38]);
-    sphere(group, mats.dark, [0, 0.69, -0.76], [0.19, 0.14, 0.16]);
+    // Focinho largo (capivara tem rosto achatado)
+    sphere(group, mats.furDark, [0, 0.69, -0.76], [0.22, 0.16, 0.18]);
+    sphere(group, mats.dark, [0, 0.64, -0.86], [0.14, 0.08, 0.1]);
+    // Olhos (pequenos e escuros)
     for (const side of [-1, 1]) {
-      sphere(group, mats.fur, [side * 0.27, 1.02, -0.48], [0.105, 0.13, 0.09]);
-      sphere(group, mats.dark, [side * 0.22, 0.86, -0.72], [0.035, 0.045, 0.025]);
+      sphere(group, mats.eyeBlack, [side * 0.22, 0.86, -0.7], [0.05, 0.06, 0.04]);
+      // Orelhas pequenas e arredondadas
+      sphere(group, mats.furDark, [side * 0.27, 1.02, -0.48], [0.105, 0.13, 0.09]);
+      // Orelha interna
+      sphere(group, mats.furLight, [side * 0.27, 1.02, -0.51], [0.06, 0.07, 0.03]);
     }
-    for (const x of [-0.39, 0.39]) for (const z of [-0.19, 0.31])
+    // Patas
+    for (const x of [-0.39, 0.39]) for (const z of [-0.19, 0.31]) {
       box(group, mats.fur, [x, 0.2, z], [0.15, 0.38, 0.16]);
+      // Dedos (pequenas esferas)
+      for (let t = -1; t <= 1; t++) {
+        sphere(group, mats.furDark, [x + t * 0.04, 0.03, z + 0.06], [0.03, 0.03, 0.04]);
+      }
+    }
   } else if (kind === "rabbit") {
+    // Corpo
     sphere(group, mats.rabbit, [0, 0.48, 0.08], [0.46, 0.43, 0.46]);
+    // Barriga mais clara
+    sphere(group, mats.rabbitShade, [0, 0.32, 0.08], [0.35, 0.22, 0.35]);
+    // Cabeça
     sphere(group, mats.rabbit, [0, 0.84, -0.31], [0.32, 0.31, 0.3]);
+    // Bochechas
     for (const side of [-1, 1]) {
+      sphere(group, mats.rabbitShade, [side * 0.18, 0.78, -0.42], [0.14, 0.13, 0.1]);
+    }
+    // Focinho + nariz
+    sphere(group, mats.rabbitPink, [0, 0.78, -0.58], [0.045, 0.035, 0.03]);
+    // Olhos grandes
+    for (const side of [-1, 1]) {
+      sphere(group, mats.eyeWhite, [side * 0.15, 0.89, -0.5], [0.07, 0.08, 0.05]);
+      sphere(group, mats.eyeBlack, [side * 0.15, 0.89, -0.545], [0.045, 0.05, 0.03]);
+      // Brilho do olho
+      sphere(group, mats.eyeWhite, [side * 0.135, 0.905, -0.565], [0.018, 0.018, 0.01]);
+      // Orelhas compridas
       const ear = sphere(group, mats.rabbit, [side * 0.17, 1.28, -0.31], [0.12, 0.38, 0.1]);
       ear.rotation.z = side * -0.16;
       sphere(group, mats.rabbitPink, [side * 0.17, 1.29, -0.395], [0.055, 0.27, 0.025]);
-      sphere(group, mats.dark, [side * 0.15, 0.89, -0.56], [0.035, 0.045, 0.025]);
     }
-    sphere(group, mats.rabbit, [0, 0.45, 0.52], [0.16, 0.16, 0.16]);
-    for (const x of [-0.25, 0.25]) box(group, mats.rabbit, [x, 0.16, 0.18], [0.16, 0.29, 0.18]);
-  } else {
-    sphere(group, mats.chicken, [0, 0.54, 0.05], [0.48, 0.54, 0.48]);
-    sphere(group, mats.chicken, [0, 0.91, -0.31], [0.31, 0.31, 0.3]);
-    sphere(group, mats.beak, [0, 0.83, -0.61], [0.13, 0.09, 0.15]);
+    // Bigodes
     for (const side of [-1, 1]) {
-      sphere(group, mats.dark, [side * 0.13, 0.97, -0.55], [0.03, 0.04, 0.025]);
-      const wing = sphere(group, mats.chicken, [side * 0.39, 0.57, -0.02], [0.16, 0.29, 0.29]);
+      for (let i = 0; i < 3; i++) {
+        const w = cyl(group, mats.dark, [side * 0.14, 0.79 + i * 0.01, -0.6], 0.003, 0.003, 0.16, 3);
+        w.rotation.z = Math.PI / 2;
+        w.rotation.y = side * (i - 1) * 0.2;
+      }
+    }
+    // Rabo fofo
+    sphere(group, mats.rabbit, [0, 0.45, 0.55], [0.15, 0.16, 0.15]);
+    // Patas traseiras (grandes)
+    for (const x of [-0.25, 0.25]) {
+      box(group, mats.rabbit, [x, 0.16, 0.2], [0.16, 0.29, 0.2]);
+      // Pé
+      box(group, mats.rabbitShade, [x, 0.03, 0.24], [0.17, 0.06, 0.24]);
+    }
+  } else {
+    // === Chicken ===
+    // Corpo
+    sphere(group, mats.chicken, [0, 0.54, 0.05], [0.48, 0.54, 0.48]);
+    // Barriga clara
+    sphere(group, mats.chickenShade, [0, 0.4, 0.05], [0.4, 0.3, 0.4]);
+    // Cabeça
+    sphere(group, mats.chicken, [0, 0.91, -0.31], [0.31, 0.31, 0.3]);
+    // Crista vermelha no topo
+    for (let i = 0; i < 3; i++) {
+      const c = sphere(group, mats.chickenComb, [0, 1.22 + (i === 1 ? 0.04 : 0), -0.31 + (i - 1) * 0.08], [0.08, 0.1, 0.08]);
+      c.scale.y = 1.2;
+    }
+    // Barbela (embaixo do bico)
+    sphere(group, mats.chickenComb, [0, 0.74, -0.5], [0.05, 0.09, 0.05]);
+    // Bico
+    sphere(group, mats.beak, [0, 0.83, -0.61], [0.13, 0.09, 0.15]);
+    sphere(group, mats.beakShade, [0, 0.79, -0.66], [0.09, 0.03, 0.08]);
+    // Olhos
+    for (const side of [-1, 1]) {
+      sphere(group, mats.eyeWhite, [side * 0.13, 0.97, -0.53], [0.04, 0.045, 0.03]);
+      sphere(group, mats.eyeBlack, [side * 0.13, 0.97, -0.555], [0.022, 0.026, 0.015]);
+      // Asas
+      const wing = sphere(group, mats.chickenShade, [side * 0.42, 0.57, -0.02], [0.16, 0.29, 0.29]);
       wing.rotation.z = side * 0.25;
+      // Detalhe de penas nas asas
+      for (let f = 0; f < 3; f++) {
+        sphere(group, mats.chicken, [side * 0.44, 0.5 + f * 0.05, -0.05 - f * 0.03], [0.08, 0.11, 0.08]);
+      }
     }
+    // Penas da cauda (viradas para cima)
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI - Math.PI / 2;
+      const tail = sphere(group, mats.chicken, [0.15 + Math.cos(a) * 0.15, 0.85, 0.38], [0.06, 0.24, 0.14]);
+      tail.rotation.z = a * 0.5;
+      tail.rotation.x = -0.5;
+    }
+    // Pernas escamosas
     for (const x of [-0.16, 0.16]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.27, 6), mats.beak);
-      leg.position.set(x, 0.15, 0.02);
-      group.add(leg);
+      cyl(group, mats.beakShade, [x, 0.15, 0.02], 0.035, 0.04, 0.27, 6);
+      // Pés
+      for (let t = -1; t <= 1; t++) {
+        const toe = box(group, mats.beakShade, [x + t * 0.06, 0.02, 0.06], [0.03, 0.03, 0.08]);
+      }
     }
-    sphere(group, mats.flowerAlt, [0, 1.2, -0.29], [0.1, 0.14, 0.1]);
+    // Pequena flor decorativa atrás
+    sphere(group, mats.chickenComb, [0, 1.05, 0.28], [0.08, 0.08, 0.08]);
   }
   return group;
 }
 
-function makeSprout(x, z, variant = 0) {
-  const plant = new THREE.Group();
-  plant.position.set(x, 0.02, z);
-  const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.09, 8), mats.soil);
-  soil.position.y = 0.04;
-  plant.add(soil);
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.055, 0.85, 6), mats.leaf);
-  stem.position.y = 0.46;
-  stem.castShadow = true;
-  plant.add(stem);
-  for (const side of [-1, 1]) {
-    const leaf = sphere(plant, mats.leafLight, [side * 0.22, 0.38, 0], [0.25, 0.09, 0.14]);
-    leaf.rotation.z = side * 0.38;
-  }
-  sphere(plant, variant === 1 ? mats.flowerAlt : mats.flower, [0, 0.94, 0], [0.18, 0.18, 0.18]);
-  plant.scale.setScalar(0.08);
-  plant.userData.growth = 0;
-  return plant;
-}
-
-export function createCompanionSystem(scene, showToast) {
+export function createCompanionSystem(scene, showToast, plantWeaponAt) {
   const panel = document.querySelector("#interaction-panel");
   const title = document.querySelector("#interaction-title");
   const hint = document.querySelector("#interaction-hint");
   const progress = document.querySelector("#interaction-progress");
   const allyCount = document.querySelector("#ally-count");
   const labels = { capybara: "Capivara", rabbit: "Coelho", chicken: "Galinha" };
+  // Escolha das armas que os animais plantam — variedade garante munição útil.
+  const plantKinds = ["corn", "peavolver", "hayk47", "sunflower", "pumpkin", "watermelon"];
   const npcs = [];
-  const growingPlants = [];
   let recruitedCount = 0;
   let closest = null;
 
@@ -202,26 +349,25 @@ export function createCompanionSystem(scene, showToast) {
     npc.wait = 1.5 + Math.random() * 3;
   }
 
-  function plantSeed(npc) {
+  // Agora os animais plantam ARMAS reais e colhíveis no mundo,
+  // em vez de sprites decorativos. Usa plantCrop do seed-plants.
+  function plantWeapon(npc) {
     const angle = Math.random() * Math.PI * 2;
     const radius = 1.5 + Math.random() * 2.2;
     const x = THREE.MathUtils.clamp(npc.root.position.x + Math.cos(angle) * radius, -50, 50);
     const z = THREE.MathUtils.clamp(npc.root.position.z + Math.sin(angle) * radius, -50, 45);
-    const plant = makeSprout(x, z, growingPlants.length % 2);
-    scene.add(plant);
-    growingPlants.push(plant);
-    if (growingPlants.length > 28) {
-      const oldest = growingPlants.shift();
-      scene.remove(oldest);
+    const kind = plantKinds[Math.floor(Math.random() * plantKinds.length)];
+    if (typeof plantWeaponAt === "function") {
+      plantWeaponAt(x, z, kind, true);
+      showToast(labels[npc.kind] + " plantou uma " + kind.toUpperCase() + " colhível!");
     }
-    showToast(labels[npc.kind] + " plantou uma semente!");
   }
 
   const pollenClouds = [];
 
   function addPollenCloud(position, kind, quality = 1, options = {}) {
-    const strengths = { corn: 0.18, sunflower: 0.32, pumpkin: 0.48 };
-    const colors = { corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239 };
+    const strengths = { corn: 0.18, sunflower: 0.32, pumpkin: 0.48, peavolver: 0.15, hayk47: 0.22, watermelon: 0.28 };
+    const colors = { corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239, peavolver: 0x6ab04c, hayk47: 0xd4a843, watermelon: 0x2e7d32 };
     const cloud = new THREE.Group();
     const cloudMaterial = new THREE.MeshBasicMaterial({
       color: colors[kind] || 0xe9c34f, transparent: true, opacity: 0.34,
@@ -353,19 +499,13 @@ export function createCompanionSystem(scene, showToast) {
       if (npc.recruited) {
         npc.plantTimer -= delta;
         if (npc.plantTimer <= 0) {
-          plantSeed(npc);
+          plantWeapon(npc);
           npc.plantTimer = 13 + Math.random() * 6;
           chooseTarget(npc);
         }
       }
     }
-
-    for (const plant of growingPlants) {
-      plant.userData.growth = Math.min(1, plant.userData.growth + delta / 3.8);
-      const eased = plant.userData.growth * plant.userData.growth * (3 - 2 * plant.userData.growth);
-      plant.scale.setScalar(0.08 + eased * 0.92);
-    }
   }
 
   return { update, addPollenCloud, tryDirectHit };
-}
+           }
