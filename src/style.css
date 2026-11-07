@@ -74,3 +74,65 @@ body { font-family: "DM Sans", sans-serif; color: var(--cream); }
   .status-pill { font-size: 7px; }
   .brand-name { font-size: 16px; }
 }
+
+/* Friendly companion recruitment and field-helper HUD */
+.ally-pill { color: rgba(255,255,255,.9); }
+.ally-pill strong { color: var(--gold); margin: 0 3px; }
+.interaction-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  width: min(270px, calc(100% - 36px));
+  padding: 13px 16px 12px;
+  transform: translate(-50%, 8px);
+  border: 1px solid rgba(245,237,218,.22);
+  background: rgba(22,35,26,.82);
+  box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+  pointer-events: none;
+}
+.interaction-panel.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+.interaction-kicker {
+  color: var(--gold);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+.interaction-panel strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--cream);
+  font: 700 17px "Barlow Condensed", sans-serif;
+  letter-spacing: 1.3px;
+}
+.interaction-track {
+  height: 6px;
+  margin: 10px 0 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.32);
+}
+.interaction-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(230,185,79,.45);
+  transition: width .08s linear;
+}
+.interaction-panel small {
+  color: rgba(255,255,255,.68);
+  font-size: 8px;
+  letter-spacing: 1.25px;
+}
+@media (max-width: 700px) {
+  .interaction-panel { bottom: 64px; }
+  .ally-pill { display: none; }
+}
