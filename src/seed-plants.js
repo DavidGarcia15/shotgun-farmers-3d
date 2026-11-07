@@ -6,9 +6,9 @@ import {
   playReload 
 } from "./sound.js";
 
-// Shotgun-Farmers-style loop: each plant weapon has its own clip.
-// Fire to spend ammo; a miss plants a weapon in the soil.
-// Harvest with E to reload. The longer it grew, the more ammo you get.
+// Shotgun-Farmers-style loop: cada arma vegetal tem seu próprio pente.
+// Atire para gastar; um erro planta uma arma no chão.
+// Colha com E para recarregar. Quanto mais cresceu, mais munição dá.
 
 const palette = {
   corn: 0xe9c34f, sunflower: 0xf2cf55, pumpkin: 0xe98239,
@@ -17,51 +17,14 @@ const palette = {
 };
 
 const weaponInfo = {
-  corn: {
-    name: "ESPINGARDA DE MILHO",
-    ability: "PÓLEN LEVE",
-    detail: "Cano duplo. Dispara vários projéteis; recarrega rápido.",
-    clipSize: 6, growTime: 9, minYield: 2, maxYield: 6,
-    matureScale: 0.55, recoilKick: 0.18, shotSound: playCornShot,
-  },
-  sunflower: {
-    name: "SNIPER DE GIRASSOL",
-    ability: "PÓLEN VIVO",
-    detail: "Preciso e longo. Um tiro forte; recarga média.",
-    clipSize: 2, growTime: 13, minYield: 1, maxYield: 3,
-    matureScale: 0.58, recoilKick: 0.22, shotSound: playSunflowerShot,
-  },
-  pumpkin: {
-    name: "LANÇADOR DE ABÓBORA",
-    ability: "PÓLEN FORTE",
-    detail: "Tubo largo. Projétil explosivo; recarga lenta.",
-    clipSize: 1, growTime: 18, minYield: 1, maxYield: 2,
-    matureScale: 0.62, recoilKick: 0.32, shotSound: playPumpkinShot,
-  },
-  peavolver: {
-    name: "PEAVOLVER",
-    ability: "PÓLEN RÁPIDO",
-    detail: "Revólver de ervilha. Tiro rápido e leve; bom para curta distância.",
-    clipSize: 6, growTime: 8, minYield: 2, maxYield: 5,
-    matureScale: 0.5, recoilKick: 0.15, shotSound: playPeavolverShot,
-  },
-  hayk47: {
-    name: "HAYK-47",
-    ability: "PÓLEN CONSTANTE",
-    detail: "Rifle de feno. Rajada estável e precisa; médio alcance.",
-    clipSize: 4, growTime: 14, minYield: 1, maxYield: 4,
-    matureScale: 0.6, recoilKick: 0.2, shotSound: playHayK47Shot,
-  },
-  watermelon: {
-    name: "WATERMELMG",
-    ability: "PÓLEN PESADO",
-    detail: "Metralhadora de melancia. Cadência alta e pente grande; lenta.",
-    clipSize: 8, growTime: 20, minYield: 2, maxYield: 5,
-    matureScale: 0.65, recoilKick: 0.25, shotSound: playWatermeLMGShot,
-  },
+  corn: { name: "ESPINGARDA DE MILHO", ability: "PÓLEN LEVE", detail: "Cano duplo. Dispara vários projéteis; recarrega rápido.", clipSize: 6, growTime: 9, minYield: 2, maxYield: 6, matureScale: 0.55, recoilKick: 0.18, shotSound: playCornShot },
+  sunflower: { name: "SNIPER DE GIRASSOL", ability: "PÓLEN VIVO", detail: "Preciso e longo. Um tiro forte; mira telescópica (RMB).", clipSize: 2, growTime: 13, minYield: 1, maxYield: 3, matureScale: 0.58, recoilKick: 0.22, shotSound: playSunflowerShot },
+  pumpkin: { name: "LANÇADOR DE ABÓBORA", ability: "PÓLEN FORTE", detail: "Tubo largo. Projétil explosivo; recarga lenta.", clipSize: 1, growTime: 18, minYield: 1, maxYield: 2, matureScale: 0.62, recoilKick: 0.32, shotSound: playPumpkinShot },
+  peavolver: { name: "PEAVOLVER", ability: "PÓLEN RÁPIDO", detail: "Revólver de ervilha. Tiro rápido e leve; curta distância.", clipSize: 6, growTime: 8, minYield: 2, maxYield: 5, matureScale: 0.5, recoilKick: 0.15, shotSound: playPeavolverShot },
+  hayk47: { name: "HAYK-47", ability: "PÓLEN CONSTANTE", detail: "Rifle de feno. Rajada estável e precisa; médio alcance.", clipSize: 4, growTime: 14, minYield: 1, maxYield: 4, matureScale: 0.6, recoilKick: 0.2, shotSound: playHayK47Shot },
+  watermelon: { name: "WATERMELMG", ability: "PÓLEN PESADO", detail: "Metralhadora de melancia. Cadência alta e pente grande.", clipSize: 8, growTime: 20, minYield: 2, maxYield: 5, matureScale: 0.65, recoilKick: 0.25, shotSound: playWatermeLMGShot },
 };
 
-// --- Rich materials ---
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
 const woodMat = mat(0x6b4a2e, { roughness: 0.95 });
 const darkWoodMat = mat(0x4a3320, { roughness: 0.95 });
@@ -73,7 +36,9 @@ const huskMat = mat(0xa8853a, { roughness: 1 });
 const greenHuskMat = mat(0x8aaf4c, { roughness: 1 });
 const shellMat = mat(0xd43a2a, { roughness: 0.55, metalness: 0.3 });
 const peaMat = mat(0x6ab04c, { roughness: 0.7 });
+const peaBrightMat = mat(0x86c968, { roughness: 0.6, emissive: 0x142a0e });
 const hayMat = mat(0xd4a843, { roughness: 1 });
+const hayBrightMat = mat(0xe4b953, { roughness: 1 });
 const ropeMat = mat(0x8b6b3d, { roughness: 1 });
 const watermelonRindMat = mat(0x2e7d32, { roughness: 0.6 });
 const watermelonStripeMat = mat(0x1b5e20, { roughness: 0.6 });
@@ -96,7 +61,7 @@ function addPart(root, geometry, material, position, scale = [1, 1, 1], rotation
   return mesh;
 }
 
-// --- World plant models ---
+// === World plant models ===
 function makePlant(kind) {
   const root = new THREE.Group();
   const stem = mat(palette.stem);
@@ -121,14 +86,10 @@ function makePlant(kind) {
   } else if (kind === "peavolver") {
     addPart(root, new THREE.CylinderGeometry(0.05, 0.08, 1.2, 6), stem, [0, 0.6, 0]);
     for (const side of [-1, 1]) addPart(root, new THREE.SphereGeometry(0.22, 8, 6), leaf, [side * 0.22, 0.45, 0], [0.9, 0.18, 0.4]);
-    for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.CapsuleGeometry(0.06, 0.25, 3, 6), peaMat, [0.15, 0.8 + i * 0.15, 0], [1, 1, 1], [0, 0, 0.2]);
-    }
+    for (let i = 0; i < 3; i++) addPart(root, new THREE.CapsuleGeometry(0.06, 0.25, 3, 6), peaMat, [0.15, 0.8 + i * 0.15, 0], [1, 1, 1], [0, 0, 0.2]);
     addPart(root, new THREE.SphereGeometry(0.12, 8, 6), light, [0, 1.15, 0]);
   } else if (kind === "hayk47") {
-    for (let i = 0; i < 5; i++) {
-      addPart(root, new THREE.CylinderGeometry(0.03, 0.03, 1.4, 4), hayMat, [(i - 2) * 0.1, 0.7, 0]);
-    }
+    for (let i = 0; i < 5; i++) addPart(root, new THREE.CylinderGeometry(0.03, 0.03, 1.4, 4), hayMat, [(i - 2) * 0.1, 0.7, 0]);
     addPart(root, new THREE.CylinderGeometry(0.25, 0.25, 0.1, 8), ropeMat, [0, 0.5, 0]);
     addPart(root, new THREE.CylinderGeometry(0.25, 0.25, 0.1, 8), ropeMat, [0, 1.0, 0]);
     addPart(root, new THREE.SphereGeometry(0.15, 6, 4), hayMat, [0, 1.4, 0]);
@@ -136,7 +97,7 @@ function makePlant(kind) {
     addPart(root, new THREE.SphereGeometry(0.6, 12, 9), watermelonRindMat, [0, 0.55, 0], [1.2, 0.9, 1]);
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      addPart(root, new THREE.BoxGeometry(0.03, 0.8, 0.03), mat(0x1b5e20), [Math.cos(a) * 0.55, 0.55, Math.sin(a) * 0.55], [1, 1, 1], [0, 0, a]);
+      addPart(root, new THREE.BoxGeometry(0.03, 0.8, 0.03), watermelonStripeMat, [Math.cos(a) * 0.55, 0.55, Math.sin(a) * 0.55], [1, 1, 1], [0, 0, a]);
     }
     addPart(root, new THREE.CylinderGeometry(0.06, 0.08, 0.2, 6), stem, [0, 1.1, 0]);
     addPart(root, new THREE.SphereGeometry(0.2, 8, 6), light, [0.4, 0.8, 0], [0.8, 0.18, 0.5]);
@@ -144,453 +105,428 @@ function makePlant(kind) {
   return root;
 }
 
-// ============================================================
 // === FIRST-PERSON WEAPON MODELS ===
-// Local space: grip at origin, -Z is muzzle direction.
-// ============================================================
 function makeWeaponModel(kind) {
-
   const root = new THREE.Group();
 
   // =========================================================
-  // === ESPINGARDA DE MILHO (Double Corncob Shotgun) ===
+  // === ESPINGARDA DE MILHO ===
   // =========================================================
   if (kind === "corn") {
-    // Dois "sabugos" de milho paralelos como canos, com grãos em espiral
     for (const side of [-1, 1]) {
       const x = side * 0.085;
-
-      // Corpo do sabugo (cilindro amarelo)
       addPart(root, new THREE.CylinderGeometry(0.075, 0.09, 0.7, 12), mat(palette.corn),
         [x, 0.03, -0.35], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-      // Grãos em espiral ao redor do sabugo (bem visíveis!)
       for (let i = 0; i < 8; i++) {
         const z = -0.08 - i * 0.075;
         for (let j = 0; j < 6; j++) {
           const a = (j / 6) * Math.PI * 2 + i * 0.35;
           addPart(root, new THREE.SphereGeometry(0.022, 6, 5), brightGoldMat,
-            [x + Math.cos(a) * 0.085, 0.03 + Math.sin(a) * 0.085, z], [1, 1, 1]);
+            [x + Math.cos(a) * 0.085, 0.03 + Math.sin(a) * 0.085, z]);
         }
       }
-
-      // Palha verde-amarelada aberta no início do sabugo (decoração)
       for (let k = 0; k < 3; k++) {
         const a = (k / 3) * Math.PI * 2;
         addPart(root, new THREE.ConeGeometry(0.06, 0.22, 5), greenHuskMat,
-          [x + Math.cos(a) * 0.1, 0.03 + Math.sin(a) * 0.1, -0.05],
-          [1, 1, 1], [Math.PI / 2, a, 0]);
+          [x + Math.cos(a) * 0.1, 0.03 + Math.sin(a) * 0.1, -0.05], [1, 1, 1], [Math.PI / 2, a, 0]);
       }
-
-      // Boca metálica na ponta do cano
       addPart(root, new THREE.CylinderGeometry(0.065, 0.07, 0.08, 12), darkMetalMat,
         [x, 0.03, -0.72], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-      // Furo interno escuro do cano
       addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.02, 12), mat(0x050505),
         [x, 0.03, -0.77], [1, 1, 1], [-Math.PI / 2, 0, 0]);
     }
-
-    // Receptor central (madeira)
     addPart(root, new THREE.BoxGeometry(0.24, 0.16, 0.28), woodMat, [0, 0.02, 0.06]);
-
-    // Detalhe dourado no receptor (milho esculpido)
     addPart(root, new THREE.BoxGeometry(0.26, 0.04, 0.3), brightGoldMat, [0, 0.1, 0.06]);
-
-    // Punho em madeira escura
-    addPart(root, new THREE.CylinderGeometry(0.045, 0.055, 0.22, 10), woodMat,
-      [0, -0.13, 0.15], [1, 1, 1], [0.4, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.015, 10), brightGoldMat,
-      [0, -0.24, 0.18], [1, 1, 1], [0.4, 0, 0]);
-
-    // Coronha longa em madeira
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.055, 0.22, 10), woodMat, [0, -0.13, 0.15], [1, 1, 1], [0.4, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.015, 10), brightGoldMat, [0, -0.24, 0.18], [1, 1, 1], [0.4, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.16, 0.16, 0.5), woodMat, [0, -0.03, 0.32]);
     addPart(root, new THREE.BoxGeometry(0.11, 0.05, 0.4), darkWoodMat, [0, 0.05, 0.32]);
-
-    // Detalhe de grãos esculpidos na coronha
-    for (let i = 0; i < 4; i++) {
-      addPart(root, new THREE.SphereGeometry(0.02, 6, 4), brightGoldMat,
-        [0, 0.02, 0.15 + i * 0.1], [1, 1, 1]);
-    }
-
-    // Guarda do gatilho + gatilho
-    addPart(root, new THREE.TorusGeometry(0.045, 0.015, 6, 14), darkMetalMat,
-      [0, -0.1, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    for (let i = 0; i < 4; i++) addPart(root, new THREE.SphereGeometry(0.02, 6, 4), brightGoldMat, [0, 0.02, 0.15 + i * 0.1]);
+    addPart(root, new THREE.TorusGeometry(0.045, 0.015, 6, 14), darkMetalMat, [0, -0.1, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.018, 0.06, 0.018), metalMat, [0, -0.06, 0.02]);
-
-    // Cartuchos vermelhos visíveis na lateral do receptor
     for (let i = 0; i < 4; i++) {
-      addPart(root, new THREE.CylinderGeometry(0.022, 0.022, 0.09, 8), shellMat,
-        [0.14, 0.04, -0.02 + i * 0.07], [1, 1, 1], [0, 0, Math.PI / 2]);
-      addPart(root, new THREE.CylinderGeometry(0.018, 0.018, 0.02, 8), brightGoldMat,
-        [0.14, 0.04, -0.06 + i * 0.07], [1, 1, 1], [0, 0, Math.PI / 2]);
+      addPart(root, new THREE.CylinderGeometry(0.022, 0.022, 0.09, 8), shellMat, [0.14, 0.04, -0.02 + i * 0.07], [1, 1, 1], [0, 0, Math.PI / 2]);
+      addPart(root, new THREE.CylinderGeometry(0.018, 0.018, 0.02, 8), brightGoldMat, [0.14, 0.04, -0.06 + i * 0.07], [1, 1, 1], [0, 0, Math.PI / 2]);
     }
-
-    // Mira (pequena folha dobrada no topo)
     addPart(root, new THREE.ConeGeometry(0.03, 0.08, 4), greenHuskMat, [0, 0.14, -0.15]);
   }
 
   // =========================================================
-  // === SNIPER DE GIRASSOL (Sunflower Sniper) ===
+  // === SNIPER DE GIRASSOL ===
   // =========================================================
   else if (kind === "sunflower") {
-    // Cano = caule verde longo
-    addPart(root, new THREE.CylinderGeometry(0.032, 0.05, 1.05, 12), mat(palette.stem),
-      [0, 0.02, -0.55], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Anéis de folhas ao longo do cano
-    for (let i = 0; i < 4; i++) {
-      const z = -0.15 - i * 0.22;
-      addPart(root, new THREE.TorusGeometry(0.045, 0.015, 6, 12), mat(palette.leafLight),
-        [0, 0.02, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    }
-
-    // Boca metálica na ponta
-    addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.09, 12), darkMetalMat,
-      [0, 0.02, -1.08], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.04, 0.04, 0.02, 12), mat(0x050505),
-      [0, 0.02, -1.13], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Luneta (cilindro escuro) com flor de girassol em cada ponta
-    addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.4, 12), darkMetalMat,
-      [0, 0.12, -0.18], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Flor de girassol TRASEIRA (perto do olho do jogador) — muitas pétalas
-    addPart(root, new THREE.SphereGeometry(0.08, 10, 8), mat(0x65452d),
-      [0, 0.12, 0.02], [1, 1, 0.8]);
+    addPart(root, new THREE.CylinderGeometry(0.032, 0.05, 1.05, 12), mat(palette.stem), [0, 0.02, -0.55], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    for (let i = 0; i < 4; i++) addPart(root, new THREE.TorusGeometry(0.045, 0.015, 6, 12), mat(palette.leafLight), [0, 0.02, -0.15 - i * 0.22], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.09, 12), darkMetalMat, [0, 0.02, -1.08], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.04, 0.02, 12), mat(0x050505), [0, 0.02, -1.13], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.4, 12), darkMetalMat, [0, 0.12, -0.18], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.08, 10, 8), mat(0x65452d), [0, 0.12, 0.02], [1, 1, 0.8]);
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
-      addPart(root, new THREE.SphereGeometry(0.038, 6, 5), mat(palette.sunflower),
-        [Math.cos(a) * 0.1, 0.12 + Math.sin(a) * 0.1, 0.02], [1.3, 0.4, 1]);
+      addPart(root, new THREE.SphereGeometry(0.038, 6, 5), mat(palette.sunflower), [Math.cos(a) * 0.1, 0.12 + Math.sin(a) * 0.1, 0.02], [1.3, 0.4, 1]);
     }
-
-    // Flor de girassol FRONTAL — também com pétalas, mas vista de frente
-    addPart(root, new THREE.SphereGeometry(0.08, 10, 8), mat(0x65452d),
-      [0, 0.12, -0.38], [1, 1, 0.8]);
+    addPart(root, new THREE.SphereGeometry(0.08, 10, 8), mat(0x65452d), [0, 0.12, -0.38], [1, 1, 0.8]);
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
-      addPart(root, new THREE.SphereGeometry(0.038, 6, 5), mat(palette.sunflower),
-        [Math.cos(a) * 0.1, 0.12 + Math.sin(a) * 0.1, -0.38], [1.3, 0.4, 1]);
+      addPart(root, new THREE.SphereGeometry(0.038, 6, 5), mat(palette.sunflower), [Math.cos(a) * 0.1, 0.12 + Math.sin(a) * 0.1, -0.38], [1.3, 0.4, 1]);
     }
-
-    // Lente reflexiva azul (vidro da luneta) na frente
-    addPart(root, new THREE.CircleGeometry(0.04, 14), lensMat, [0, 0.12, 0.04], [1, 1, 1]);
-
-    // Suportes da luneta (2 anéis metálicos)
-    for (const z of [-0.28, -0.08]) {
-      addPart(root, new THREE.BoxGeometry(0.08, 0.07, 0.025), metalMat, [0, 0.07, z]);
-    }
-
-    // Bipé metálico (dobrado sob o cano) — bem visível
+    addPart(root, new THREE.CircleGeometry(0.04, 14), lensMat, [0, 0.12, 0.04]);
+    for (const z of [-0.28, -0.08]) addPart(root, new THREE.BoxGeometry(0.08, 0.07, 0.025), metalMat, [0, 0.07, z]);
     for (const side of [-1, 1]) {
-      addPart(root, new THREE.CylinderGeometry(0.012, 0.012, 0.28, 6), metalMat,
-        [side * 0.07, -0.06, -0.65], [1, 1, 1], [0.5, 0, side * 0.35]);
-      addPart(root, new THREE.CylinderGeometry(0.02, 0.02, 0.02, 6), darkMetalMat,
-        [side * 0.14, -0.19, -0.72], [1, 1, 1]);
+      addPart(root, new THREE.CylinderGeometry(0.012, 0.012, 0.28, 6), metalMat, [side * 0.07, -0.06, -0.65], [1, 1, 1], [0.5, 0, side * 0.35]);
+      addPart(root, new THREE.CylinderGeometry(0.02, 0.02, 0.02, 6), darkMetalMat, [side * 0.14, -0.19, -0.72]);
     }
-
-    // Receptor central
     addPart(root, new THREE.BoxGeometry(0.14, 0.14, 0.38), woodMat, [0, 0, 0.18]);
-
-    // Coronha longa com detalhe de pétala esculpida
     addPart(root, new THREE.BoxGeometry(0.11, 0.16, 0.55), woodMat, [0, -0.03, 0.45]);
     addPart(root, new THREE.BoxGeometry(0.08, 0.04, 0.4), darkWoodMat, [0, 0.06, 0.45]);
-
-    // Pétala esculpida na coronha (dourada)
     for (let i = 0; i < 5; i++) {
       const a = (i / 5) * Math.PI * 2;
-      addPart(root, new THREE.SphereGeometry(0.025, 6, 4), brightGoldMat,
-        [Math.cos(a) * 0.03, -0.02 + Math.sin(a) * 0.03, 0.35 + (i % 2) * 0.05], [1.5, 0.4, 1]);
+      addPart(root, new THREE.SphereGeometry(0.025, 6, 4), brightGoldMat, [Math.cos(a) * 0.03, -0.02 + Math.sin(a) * 0.03, 0.35 + (i % 2) * 0.05], [1.5, 0.4, 1]);
     }
-
-    // Punho
-    addPart(root, new THREE.CylinderGeometry(0.035, 0.045, 0.2, 8), woodMat,
-      [0, -0.11, 0.22], [1, 1, 1], [0.4, 0, 0]);
-
-    // Guarda do gatilho + gatilho
-    addPart(root, new THREE.TorusGeometry(0.035, 0.011, 6, 12), darkMetalMat,
-      [0, -0.07, 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.035, 0.045, 0.2, 8), woodMat, [0, -0.11, 0.22], [1, 1, 1], [0.4, 0, 0]);
+    addPart(root, new THREE.TorusGeometry(0.035, 0.011, 6, 12), darkMetalMat, [0, -0.07, 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.012, 0.04, 0.012), metalMat, [0, -0.05, 0.12]);
-
-    // Pente de sementes (pequenas esferas pretas visíveis)
     addPart(root, new THREE.BoxGeometry(0.06, 0.12, 0.14), darkMetalMat, [0, -0.15, 0.05]);
-    for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.SphereGeometry(0.018, 6, 4), seedMat,
-        [0, -0.18 + i * 0.04, 0.05]);
-    }
+    for (let i = 0; i < 3; i++) addPart(root, new THREE.SphereGeometry(0.018, 6, 4), seedMat, [0, -0.18 + i * 0.04, 0.05]);
   }
 
   // =========================================================
-  // === LANÇADOR DE ABÓBORA (Pumpkin Grenade Launcher) ===
+  // === LANÇADOR DE ABÓBORA ===
   // =========================================================
   else if (kind === "pumpkin") {
-    // Corpo principal: 3 "fatias" de abóbora empilhadas formando um tambor
-    // Fatia central (maior)
-    addPart(root, new THREE.SphereGeometry(0.24, 16, 12), mat(palette.pumpkin),
-      [0, 0, -0.22], [1.15, 1, 1.15]);
-    // Fatias laterais (dão profundidade de abóbora com gomos)
-    addPart(root, new THREE.SphereGeometry(0.22, 16, 12), mat(0xd86f2a),
-      [0, 0, -0.22], [1.25, 1.05, 0.9]);
-    addPart(root, new THREE.SphereGeometry(0.2, 16, 12), mat(0xc6611f),
-      [0, 0, -0.22], [1.35, 1.1, 0.75]);
-
-    // Gomos visíveis (8 fatias verticais escuras ao redor da abóbora)
+    addPart(root, new THREE.SphereGeometry(0.24, 16, 12), mat(palette.pumpkin), [0, 0, -0.22], [1.15, 1, 1.15]);
+    addPart(root, new THREE.SphereGeometry(0.22, 16, 12), mat(0xd86f2a), [0, 0, -0.22], [1.25, 1.05, 0.9]);
+    addPart(root, new THREE.SphereGeometry(0.2, 16, 12), mat(0xc6611f), [0, 0, -0.22], [1.35, 1.1, 0.75]);
     for (let i = 0; i < 10; i++) {
       const a = (i / 10) * Math.PI * 2;
-      addPart(root, new THREE.BoxGeometry(0.02, 0.48, 0.55), pumpkinRibMat,
-        [Math.cos(a) * 0.23, Math.sin(a) * 0.21, -0.22],
-        [1, 1, 1], [0, 0, a]);
+      addPart(root, new THREE.BoxGeometry(0.02, 0.48, 0.55), pumpkinRibMat, [Math.cos(a) * 0.23, Math.sin(a) * 0.21, -0.22], [1, 1, 1], [0, 0, a]);
     }
-
-    // Boca do tubo (bem aberta, visível de frente)
-    addPart(root, new THREE.CylinderGeometry(0.15, 0.17, 0.14, 16), mat(0xa0561c),
-      [0, 0, -0.48], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.125, 0.145, 0.04, 16), darkMetalMat,
-      [0, 0, -0.56], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Interior escuro
-    addPart(root, new THREE.CylinderGeometry(0.11, 0.11, 0.02, 16), mat(0x050505),
-      [0, 0, -0.57], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Caule verde no topo (como se fosse a mira da arma)
-    addPart(root, new THREE.CylinderGeometry(0.03, 0.045, 0.14, 8), mat(palette.stem),
-      [0, 0.22, -0.18], [1, 1, 1], [0.15, 0, 0]);
-    // Folha pequena no topo do caule
-    addPart(root, new THREE.SphereGeometry(0.06, 6, 4), mat(palette.leafLight),
-      [0.02, 0.3, -0.18], [0.4, 0.15, 1.3], [0, 0, 0.3]);
-
-    // Vinha enrolada em espiral visível ao longo do tubo
+    addPart(root, new THREE.CylinderGeometry(0.15, 0.17, 0.14, 16), mat(0xa0561c), [0, 0, -0.48], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.125, 0.145, 0.04, 16), darkMetalMat, [0, 0, -0.56], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.11, 0.11, 0.02, 16), mat(0x050505), [0, 0, -0.57], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.03, 0.045, 0.14, 8), mat(palette.stem), [0, 0.22, -0.18], [1, 1, 1], [0.15, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.06, 6, 4), mat(palette.leafLight), [0.02, 0.3, -0.18], [0.4, 0.15, 1.3], [0, 0, 0.3]);
     for (let i = 0; i < 6; i++) {
       const t = i / 6 * Math.PI * 3;
-      addPart(root, new THREE.TorusGeometry(0.26, 0.015, 6, 12, Math.PI / 2), mat(palette.stem),
-        [0, 0, -0.22], [1, 1, 1], [t, Math.PI / 2, 0]);
+      addPart(root, new THREE.TorusGeometry(0.26, 0.015, 6, 12, Math.PI / 2), mat(palette.stem), [0, 0, -0.22], [1, 1, 1], [t, Math.PI / 2, 0]);
     }
-
-    // Mecanismo de gatilho (mais detalhado)
     addPart(root, new THREE.BoxGeometry(0.12, 0.1, 0.18), woodMat, [0, -0.2, 0.02]);
     addPart(root, new THREE.BoxGeometry(0.06, 0.05, 0.12), darkWoodMat, [0, -0.27, 0.02]);
-    // Guarda do gatilho metálica
-    addPart(root, new THREE.TorusGeometry(0.05, 0.014, 6, 14), darkMetalMat,
-      [0, -0.25, -0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.TorusGeometry(0.05, 0.014, 6, 14), darkMetalMat, [0, -0.25, -0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
     addPart(root, new THREE.BoxGeometry(0.018, 0.07, 0.018), metalMat, [0, -0.21, -0.02]);
-
-    // Punho de madeira com detalhe de abóbora
-    addPart(root, new THREE.CylinderGeometry(0.055, 0.065, 0.3, 10), woodMat,
-      [0, -0.24, 0.15], [1, 1, 1], [0.35, 0, 0]);
-    addPart(root, new THREE.SphereGeometry(0.03, 8, 6), mat(palette.pumpkin),
-      [0, -0.32, 0.22], [1, 1, 1]);
-
-    // Mini-abóboras no "pente" (lateral esquerda) - super visíveis
+    addPart(root, new THREE.CylinderGeometry(0.055, 0.065, 0.3, 10), woodMat, [0, -0.24, 0.15], [1, 1, 1], [0.35, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.03, 8, 6), mat(palette.pumpkin), [0, -0.32, 0.22]);
     for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.SphereGeometry(0.055, 10, 8), mat(palette.pumpkin),
-        [-0.2, -0.06, -0.02 + i * 0.07], [1, 0.9, 1]);
-      addPart(root, new THREE.CylinderGeometry(0.008, 0.012, 0.03, 5), mat(palette.stem),
-        [-0.2, 0.02, -0.02 + i * 0.07]);
+      addPart(root, new THREE.SphereGeometry(0.055, 10, 8), mat(palette.pumpkin), [-0.2, -0.06, -0.02 + i * 0.07], [1, 0.9, 1]);
+      addPart(root, new THREE.CylinderGeometry(0.008, 0.012, 0.03, 5), mat(palette.stem), [-0.2, 0.02, -0.02 + i * 0.07]);
     }
-
-    // Folhas de abóbora na parte superior (como se fosse a "mira")
-    for (const side of [-1, 1]) {
-      addPart(root, new THREE.SphereGeometry(0.06, 8, 6), mat(palette.leafLight),
-        [side * 0.18, 0.16, -0.32], [0.4, 0.9, 1.3], [0, side * 0.3, 0]);
-    }
+    for (const side of [-1, 1]) addPart(root, new THREE.SphereGeometry(0.06, 8, 6), mat(palette.leafLight), [side * 0.18, 0.16, -0.32], [0.4, 0.9, 1.3], [0, side * 0.3, 0]);
   }
 
   // =========================================================
-  // === PEAVOLVER (Pea Revolver) ===
+  // === PEAVOLVER — REFORMULADO ===
+  // Revólver clássico: cano octogonal, corpo curvo de vagem,
+  // cilindro giratório com 6 ervilhas grandes, martelo traseiro.
   // =========================================================
   else if (kind === "peavolver") {
-    // Corpo: uma grande vagem de ervilha
-    addPart(root, new THREE.CapsuleGeometry(0.09, 0.35, 4, 10), peaMat,
-      [0, 0.02, -0.15], [1, 1.15, 1], [0, 0, Math.PI / 2]);
+    // Corpo central (receiver) — um pouco curvo, em vagem achatada
+    addPart(root, new THREE.CapsuleGeometry(0.07, 0.28, 4, 10), peaMat,
+      [0, 0.01, -0.02], [1.2, 1.1, 1], [0, 0, Math.PI / 2]);
 
-    // Cilindro de revólver com 6 "ervilhas" visíveis na parte externa
-    addPart(root, new THREE.CylinderGeometry(0.12, 0.12, 0.2, 8), darkMetalMat,
-      [0, 0.02, 0.03], [1, 1, 1], [0, 0, Math.PI / 2]);
+    // Detalhes da casca da vagem (leve costura)
+    for (let i = -2; i <= 2; i++) {
+      addPart(root, new THREE.SphereGeometry(0.03, 6, 4), peaBrightMat,
+        [0, 0.06, i * 0.08], [1.4, 0.7, 1]);
+    }
+
+    // Cilindro giratório do revólver — bem visível e característico
+    addPart(root, new THREE.CylinderGeometry(0.11, 0.11, 0.15, 12), darkMetalMat,
+      [0, 0.01, 0.04], [1, 1, 1], [0, 0, Math.PI / 2]);
+    // Anel externo do cilindro (detalhe metálico)
+    for (const z of [-0.08, 0.08]) {
+      addPart(root, new THREE.TorusGeometry(0.11, 0.012, 6, 14), metalMat,
+        [0, 0.01, 0.04 + z * 0.5], [1, 1, 1], [0, Math.PI / 2, 0]);
+    }
+    // 6 câmaras com ervilhas gigantes brilhantes
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      addPart(root, new THREE.SphereGeometry(0.04, 8, 6), peaMat,
-        [Math.cos(a) * 0.1, 0.02 + Math.sin(a) * 0.1, 0.03], [1, 1, 1]);
+      // Câmara escura
+      addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.02, 8), mat(0x111111),
+        [Math.cos(a) * 0.085, 0.01 + Math.sin(a) * 0.085, 0.09], [1, 1, 1], [Math.PI / 2, 0, 0]);
+      // Ervilha dentro
+      addPart(root, new THREE.SphereGeometry(0.04, 10, 8), peaBrightMat,
+        [Math.cos(a) * 0.085, 0.01 + Math.sin(a) * 0.085, 0.09], [1, 1, 0.7]);
     }
 
-    // Cano de ervilha
-    addPart(root, new THREE.CylinderGeometry(0.04, 0.045, 0.42, 10), peaMat,
-      [0, 0.02, -0.46], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.05, 10), darkMetalMat,
-      [0, 0.02, -0.68], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.035, 0.035, 0.02, 10), mat(0x050505),
-      [0, 0.02, -0.71], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Cano octogonal (revólver clássico) — 8 lados visíveis
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.055, 0.42, 8), peaMat,
+      [0, 0.01, -0.42], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Nervura superior do cano
+    addPart(root, new THREE.BoxGeometry(0.02, 0.02, 0.4), peaBrightMat, [0, 0.06, -0.42]);
+    // Boca metálica
+    addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.05, 8), darkMetalMat,
+      [0, 0.01, -0.63], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.035, 0.035, 0.02, 8), mat(0x050505),
+      [0, 0.01, -0.655], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Ervilha em cima do cano (mira frontal)
+    addPart(root, new THREE.SphereGeometry(0.02, 8, 6), brightGoldMat, [0, 0.08, -0.55]);
 
-    // Punho (caule curvo)
-    addPart(root, new THREE.CylinderGeometry(0.045, 0.055, 0.22, 8), woodMat,
-      [0, -0.13, 0.14], [1, 1, 1], [0.4, 0, 0]);
+    // Martelo traseiro (assinatura do revólver) — em forma de pequena ervilha
+    addPart(root, new THREE.BoxGeometry(0.04, 0.09, 0.03), darkMetalMat, [0, 0.09, 0.14], [1, 1, 1], [-0.3, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.028, 8, 6), peaMat, [0, 0.13, 0.11]);
 
-    // Guarda do gatilho + gatilho
-    addPart(root, new THREE.TorusGeometry(0.04, 0.012, 6, 12), darkMetalMat,
-      [0, -0.08, 0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.BoxGeometry(0.014, 0.05, 0.014), metalMat, [0, -0.05, 0.08]);
+    // Guarda do gatilho — arco metálico curvado
+    addPart(root, new THREE.TorusGeometry(0.045, 0.011, 6, 16, Math.PI), darkMetalMat,
+      [0, -0.06, 0.05], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    // Gatilho metálico
+    addPart(root, new THREE.BoxGeometry(0.015, 0.05, 0.015), metalMat, [0, -0.04, 0.05]);
 
-    // Martelo do revólver (bem visível, é a assinatura do Peavolver)
-    addPart(root, new THREE.BoxGeometry(0.04, 0.08, 0.03), darkMetalMat, [0, 0.1, 0.13], [1, 1, 1], [-0.4, 0, 0]);
-    addPart(root, new THREE.SphereGeometry(0.025, 6, 4), metalMat, [0, 0.14, 0.1]);
+    // Punho — curva de revólver, com madeira e detalhe de vagem
+    const grip = addPart(root, new THREE.CylinderGeometry(0.045, 0.06, 0.24, 8), woodMat,
+      [0, -0.14, 0.13], [1, 1, 1], [0.45, 0, 0]);
+    // Enchimento do punho (vagem verde)
+    addPart(root, new THREE.BoxGeometry(0.05, 0.16, 0.08), peaMat,
+      [0, -0.13, 0.18], [1, 1, 1], [0.45, 0, 0]);
+    // Base do punho (metal)
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.055, 0.02, 8), brightGoldMat,
+      [0, -0.26, 0.22], [1, 1, 1], [0.45, 0, 0]);
 
-    // Ervilhas decorativas ao longo do cano
-    for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.SphereGeometry(0.028, 6, 4), peaMat,
-        [0.11, 0.05 + i * 0.03, -0.2 - i * 0.08], [1, 1, 1]);
+    // Detalhes: 2 ervilhas soltas na lateral (munição de reserva)
+    for (let i = 0; i < 2; i++) {
+      addPart(root, new THREE.SphereGeometry(0.028, 8, 6), peaBrightMat,
+        [0.1, -0.05, -0.15 + i * 0.06]);
     }
-
-    // Mira frontal (uma ervilha em cima)
-    addPart(root, new THREE.SphereGeometry(0.02, 6, 4), brightGoldMat, [0, 0.1, -0.6]);
   }
 
   // =========================================================
-  // === HAYK-47 (Hay Assault Rifle) ===
+  // === HAYK-47 — REFORMULADO ===
+  // AK-47 de feno: pente curvo característico, corpo de fardo,
+  // alça de mira traseira, maçaneta lateral, fios soltos.
   // =========================================================
   else if (kind === "hayk47") {
-    // Corpo principal: fardo de feno retangular
-    addPart(root, new THREE.BoxGeometry(0.18, 0.16, 0.55), hayMat, [0, 0, -0.2]);
+    // Corpo principal (fardo retangular alongado)
+    addPart(root, new THREE.BoxGeometry(0.16, 0.15, 0.55), hayMat, [0, 0, -0.2]);
 
-    // Cordas de feno visíveis (4 voltas de corda)
-    for (let i = 0; i < 4; i++) {
-      addPart(root, new THREE.TorusGeometry(0.115, 0.014, 6, 10), ropeMat,
-        [0, 0, -0.05 - i * 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    // Cordas de feno visíveis — 5 voltas
+    for (let i = 0; i < 5; i++) {
+      addPart(root, new THREE.TorusGeometry(0.11, 0.013, 6, 10), ropeMat,
+        [0, 0, -0.02 - i * 0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
     }
 
-    // Cano enrolado em feno
-    addPart(root, new THREE.CylinderGeometry(0.042, 0.052, 0.62, 10), hayMat,
-      [0, 0.02, -0.6], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Anéis de corda no cano
-    for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.TorusGeometry(0.055, 0.012, 5, 10), ropeMat,
-        [0, 0.02, -0.4 - i * 0.18], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    }
-    // Boca metálica
-    addPart(root, new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), darkMetalMat,
-      [0, 0.02, -0.93], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.04, 0.04, 0.02, 10), mat(0x050505),
-      [0, 0.02, -0.96], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Coronha de feno
-    addPart(root, new THREE.BoxGeometry(0.13, 0.15, 0.4), hayMat, [0, -0.02, 0.3]);
-    addPart(root, new THREE.TorusGeometry(0.09, 0.012, 5, 10), ropeMat,
-      [0, -0.02, 0.15], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.TorusGeometry(0.09, 0.012, 5, 10), ropeMat,
-      [0, -0.02, 0.42], [1, 1, 1], [Math.PI / 2, 0, 0]);
-
-    // Pente (pequeno fardo pendurado)
-    addPart(root, new THREE.BoxGeometry(0.09, 0.22, 0.12), hayMat, [0, -0.19, -0.1]);
-    addPart(root, new THREE.TorusGeometry(0.065, 0.01, 4, 8), ropeMat,
-      [0, -0.19, -0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.TorusGeometry(0.065, 0.01, 4, 8), ropeMat,
-      [0, -0.19, -0.1], [1, 1, 1], [0, 0, Math.PI / 2]);
-
-    // Punho
-    addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.2, 8), ropeMat,
-      [0, -0.13, 0.13], [1, 1, 1], [0.4, 0, 0]);
-
-    // Guarda do gatilho + gatilho
-    addPart(root, new THREE.TorusGeometry(0.038, 0.011, 6, 12), darkMetalMat,
-      [0, -0.08, 0.06], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.BoxGeometry(0.013, 0.05, 0.013), metalMat, [0, -0.05, 0.06]);
-
-    // Mira de palha no topo
-    addPart(root, new THREE.BoxGeometry(0.02, 0.04, 0.02), hayMat, [0, 0.1, -0.75]);
-    addPart(root, new THREE.BoxGeometry(0.06, 0.02, 0.02), hayMat, [0, 0.1, -0.1]);
-
-    // Fiapos soltos de feno (bem característicos)
-    for (let i = 0; i < 8; i++) {
+    // Fios soltos característicos (bem visíveis saindo do fardo)
+    for (let i = 0; i < 12; i++) {
       const a = Math.random() * Math.PI * 2;
-      addPart(root, new THREE.CylinderGeometry(0.004, 0.004, 0.08, 3), hayMat,
-        [Math.cos(a) * 0.15, Math.random() * 0.12 - 0.03, -0.15 - Math.random() * 0.35],
+      const r = 0.08 + Math.random() * 0.06;
+      addPart(root, new THREE.CylinderGeometry(0.004, 0.004, 0.1, 3), hayBrightMat,
+        [Math.cos(a) * r, Math.sin(a) * r * 0.7, -0.15 - Math.random() * 0.4],
         [1, 1, 1], [Math.random() * 2, Math.random() * 2, Math.random() * 2]);
     }
+
+    // Cano enrolado em feno (com a costura visível)
+    addPart(root, new THREE.CylinderGeometry(0.038, 0.048, 0.62, 10), hayMat,
+      [0, 0.02, -0.62], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Anéis de corda no cano
+    for (let i = 0; i < 4; i++) {
+      addPart(root, new THREE.TorusGeometry(0.05, 0.011, 5, 10), ropeMat,
+        [0, 0.02, -0.42 - i * 0.14], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    }
+    // Bucha do cano (metal)
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.05, 0.02, 10), darkMetalMat,
+      [0, 0.02, -0.94], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    // Boca metálica (freio de boca típico de AK)
+    addPart(root, new THREE.CylinderGeometry(0.055, 0.055, 0.06, 10), darkMetalMat,
+      [0, 0.02, -0.97], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.04, 0.02, 10), mat(0x050505),
+      [0, 0.02, -1.0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+
+    // Mira frontal em V (feno dobrado)
+    addPart(root, new THREE.BoxGeometry(0.02, 0.06, 0.02), hayBrightMat, [0, 0.1, -0.88]);
+    addPart(root, new THREE.BoxGeometry(0.06, 0.015, 0.02), hayBrightMat, [0, 0.13, -0.88]);
+
+    // Alça de mira traseira (feno dobrado em U invertido)
+    addPart(root, new THREE.BoxGeometry(0.015, 0.05, 0.02), hayBrightMat, [-0.04, 0.1, -0.15]);
+    addPart(root, new THREE.BoxGeometry(0.015, 0.05, 0.02), hayBrightMat, [0.04, 0.1, -0.15]);
+    addPart(root, new THREE.BoxGeometry(0.1, 0.012, 0.02), hayBrightMat, [0, 0.13, -0.15]);
+
+    // PENTE CURVO (assinatura da AK-47) — feito de feno enrolado em ângulo
+    const magGroup = new THREE.Group();
+    magGroup.position.set(0, -0.17, -0.12);
+    // Fardo em arco (3 segmentos em ângulo)
+    for (let i = 0; i < 3; i++) {
+      const seg = addPart(magGroup, new THREE.BoxGeometry(0.1, 0.08, 0.11), hayMat,
+        [0, -i * 0.08, -i * 0.03], [1, 1, 1], [0.35 * i, 0, 0]);
+      addPart(magGroup, new THREE.TorusGeometry(0.06, 0.008, 4, 8), ropeMat,
+        [0, -i * 0.08, -i * 0.03], [1, 1, 1], [Math.PI / 2 + 0.35 * i, 0, 0]);
+    }
+    root.add(magGroup);
+
+    // Coronha reta (fardo alongado)
+    addPart(root, new THREE.BoxGeometry(0.12, 0.14, 0.4), hayMat, [0, -0.02, 0.32]);
+    // Cordas na coronha
+    addPart(root, new THREE.TorusGeometry(0.085, 0.011, 5, 10), ropeMat,
+      [0, -0.02, 0.2], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.TorusGeometry(0.085, 0.011, 5, 10), ropeMat,
+      [0, -0.02, 0.48], [1, 1, 1], [Math.PI / 2, 0, 0]);
+
+    // Maçaneta de armar lateral (característica de AK)
+    const cocking = addPart(root, new THREE.BoxGeometry(0.06, 0.02, 0.02), darkMetalMat,
+      [0.11, 0.03, -0.1]);
+    addPart(root, new THREE.SphereGeometry(0.02, 6, 5), metalMat, [0.15, 0.03, -0.1]);
+
+    // Maçaneta/punho
+    addPart(root, new THREE.CylinderGeometry(0.04, 0.05, 0.22, 8), ropeMat,
+      [0, -0.14, 0.1], [1, 1, 1], [0.4, 0, 0]);
+    // Base do punho (metal)
+    addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.02, 8), darkMetalMat,
+      [0, -0.25, 0.15], [1, 1, 1], [0.4, 0, 0]);
+
+    // Guarda do gatilho (arco)
+    addPart(root, new THREE.TorusGeometry(0.038, 0.01, 6, 12), darkMetalMat,
+      [0, -0.09, 0.04], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.013, 0.05, 0.013), metalMat, [0, -0.06, 0.04]);
+
+    // Pequeno detalhe de fita adesiva/atadura (bem fazendeiro)
+    addPart(root, new THREE.TorusGeometry(0.105, 0.008, 4, 10), mat(0x8a7a5a),
+      [0, 0, -0.35], [1, 1, 1], [Math.PI / 2, 0, 0]);
   }
 
   // =========================================================
-  // === WATERMELMG (Watermelon Machine Gun) ===
+  // === WATERMELMG — REFORMULADO ===
+  // Metralhadora: melancia gigante, pente de tambor com sementes,
+  // cano duplo grosso, bipé aberto, alça de mira.
   // =========================================================
   else if (kind === "watermelon") {
-    // Corpo principal: melancia grande com casca listrada
-    addPart(root, new THREE.SphereGeometry(0.3, 16, 12), watermelonRindMat,
-      [0, 0, -0.25], [1.15, 1, 1.15]);
+    // Corpo: melancia principal com casca listrada bem visível
+    addPart(root, new THREE.SphereGeometry(0.32, 18, 14), watermelonRindMat,
+      [0, 0, -0.25], [1.2, 1, 1.2]);
 
-    // Listras escuras verticais bem visíveis
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2;
-      addPart(root, new THREE.BoxGeometry(0.03, 0.55, 0.03), watermelonStripeMat,
-        [Math.cos(a) * 0.3, 0, -0.25 + Math.sin(a) * 0.3], [1, 1, 1], [0, 0, a]);
+    // Listras escuras em ZIGUE-ZAGUE (10 listras onduladas)
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const stripe = addPart(root, new THREE.BoxGeometry(0.028, 0.58, 0.028), watermelonStripeMat,
+        [Math.cos(a) * 0.31, 0, -0.25 + Math.sin(a) * 0.31], [1, 1, 1], [0, 0, a]);
+      // Pequenas "ondulações" da listra
+      addPart(root, new THREE.BoxGeometry(0.03, 0.08, 0.03), watermelonStripeMat,
+        [Math.cos(a + 0.15) * 0.31, 0.15, -0.25 + Math.sin(a + 0.15) * 0.31], [1, 1, 1], [0, 0, a]);
     }
 
-    // Carne exposta (onde o cano sai) com sementes
-    addPart(root, new THREE.SphereGeometry(0.16, 12, 10), watermelonFleshMat,
-      [0, 0, -0.52], [1, 0.9, 0.5]);
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2;
-      const r = 0.06 + (i % 3) * 0.03;
-      addPart(root, new THREE.SphereGeometry(0.018, 5, 4), seedMat,
-        [Math.cos(a) * r, Math.sin(a) * r * 0.8, -0.58], [1, 1, 1]);
+    // Carne exposta na frente (onde o cano sai)
+    addPart(root, new THREE.SphereGeometry(0.18, 14, 12), watermelonFleshMat,
+      [0, 0, -0.54], [1.05, 0.9, 0.5]);
+    // 12 sementes espalhadas na carne (bem visíveis, brilham)
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const r = 0.05 + (i % 3) * 0.035;
+      addPart(root, new THREE.SphereGeometry(0.02, 6, 5), seedMat,
+        [Math.cos(a) * r, Math.sin(a) * r * 0.8, -0.6], [1, 1, 0.6]);
     }
 
-    // Cano metálico pesado
-    addPart(root, new THREE.CylinderGeometry(0.065, 0.075, 0.55, 12), darkMetalMat,
-      [0, 0, -0.78], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    // Enrolamento de arame visível
-    for (let i = 0; i < 4; i++) {
-      addPart(root, new THREE.TorusGeometry(0.08, 0.014, 6, 12), metalMat,
-        [0, 0, -0.6 - i * 0.12], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    }
-    // Boca do cano
-    addPart(root, new THREE.CylinderGeometry(0.09, 0.09, 0.08, 14), darkMetalMat,
-      [0, 0, -1.08], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.CylinderGeometry(0.06, 0.06, 0.02, 14), mat(0x050505),
-      [0, 0, -1.13], [1, 1, 1], [-Math.PI / 2, 0, 0]);
-
-    // Bipé de vinha (bem visível embaixo do cano)
+    // === CANO DUPLO GROSSO (metralhadora) ===
     for (const side of [-1, 1]) {
-      addPart(root, new THREE.CylinderGeometry(0.018, 0.025, 0.32, 6), mat(palette.stem),
-        [side * 0.17, -0.22, -0.75], [1, 1, 1], [0.35, 0, side * 0.45]);
-      addPart(root, new THREE.SphereGeometry(0.025, 6, 4), mat(palette.leafLight),
-        [side * 0.26, -0.35, -0.82], [1, 1, 1]);
+      const bx = side * 0.065;
+      addPart(root, new THREE.CylinderGeometry(0.05, 0.055, 0.6, 12), darkMetalMat,
+        [bx, 0, -0.85], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+      // Anéis de refrigeração (3 por cano, bem visíveis)
+      for (let i = 0; i < 4; i++) {
+        addPart(root, new THREE.TorusGeometry(0.062, 0.01, 6, 14), metalMat,
+          [bx, 0, -0.65 - i * 0.13], [1, 1, 1], [Math.PI / 2, 0, 0]);
+      }
+      // Boca
+      addPart(root, new THREE.CylinderGeometry(0.07, 0.07, 0.06, 12), darkMetalMat,
+        [bx, 0, -1.15], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+      addPart(root, new THREE.CylinderGeometry(0.045, 0.045, 0.02, 12), mat(0x050505),
+        [bx, 0, -1.18], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+    }
+    // Tampa traseira dos canos (união)
+    addPart(root, new THREE.BoxGeometry(0.22, 0.1, 0.08), metalMat, [0, 0, -0.55]);
+
+    // === PENTE DE TAMBOR (drum magazine) — bem característico ===
+    // Pente redondo preso embaixo, feito de fatia de melancia
+    addPart(root, new THREE.CylinderGeometry(0.19, 0.19, 0.12, 16), watermelonRindMat,
+      [0, -0.28, -0.15], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    // Carne interna visível (círculo rosa no centro do tambor)
+    addPart(root, new THREE.CylinderGeometry(0.14, 0.14, 0.13, 16), watermelonFleshMat,
+      [0, -0.28, -0.15], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    // Sementes organizadas em círculo no tambor
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addPart(root, new THREE.SphereGeometry(0.02, 6, 5), seedMat,
+        [Math.cos(a) * 0.09, -0.28 + Math.sin(a) * 0.09, -0.23], [1, 1, 0.6]);
+    }
+    // Listras do tambor (casca)
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addPart(root, new THREE.BoxGeometry(0.02, 0.38, 0.13), watermelonStripeMat,
+        [Math.cos(a) * 0.19, -0.28 + Math.sin(a) * 0.19, -0.15], [1, 1, 1], [0, Math.PI / 2, a]);
     }
 
-    // Coronha curva (vinha grossa)
-    addPart(root, new THREE.CylinderGeometry(0.06, 0.07, 0.45, 8), woodMat,
-      [0, -0.1, 0.22], [1, 1, 1], [0.25, 0, 0]);
+    // === BIPÉ ABERTO (bem visível) ===
+    for (const side of [-1, 1]) {
+      addPart(root, new THREE.CylinderGeometry(0.018, 0.025, 0.42, 6), mat(palette.stem),
+        [side * 0.22, -0.28, -0.72], [1, 1, 1], [0.3, 0, side * 0.55]);
+      // Pé do bipé (pequena folha)
+      addPart(root, new THREE.SphereGeometry(0.035, 6, 5), mat(palette.leafLight),
+        [side * 0.34, -0.48, -0.85], [0.4, 0.4, 0.5]);
+    }
+    // Dobradiça do bipé
+    addPart(root, new THREE.BoxGeometry(0.08, 0.05, 0.05), metalMat, [0, -0.08, -0.7]);
+
+    // === CORONHA (vinha grossa retorcida) ===
+    addPart(root, new THREE.CylinderGeometry(0.07, 0.08, 0.5, 10), woodMat,
+      [0, -0.08, 0.28], [1, 1, 1], [0.2, 0, 0]);
     // Detalhe de vinha enrolada na coronha
-    addPart(root, new THREE.TorusGeometry(0.07, 0.012, 5, 10), mat(palette.stem),
-      [0, -0.04, 0.35], [1, 1, 1], [Math.PI / 2, 0, 0]);
-
-    // Punho
-    addPart(root, new THREE.CylinderGeometry(0.05, 0.06, 0.22, 8), woodMat,
-      [0, -0.24, 0.05], [1, 1, 1], [0.4, 0, 0]);
-
-    // Guarda do gatilho + gatilho
-    addPart(root, new THREE.TorusGeometry(0.045, 0.012, 6, 12), darkMetalMat,
-      [0, -0.18, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
-    addPart(root, new THREE.BoxGeometry(0.015, 0.06, 0.015), metalMat, [0, -0.15, 0.02]);
-
-    // Pente = cesto de melancias pequenas
     for (let i = 0; i < 3; i++) {
-      addPart(root, new THREE.SphereGeometry(0.05, 8, 6), watermelonRindMat,
-        [0.16, -0.12 + i * 0.05, -0.1]);
-      addPart(root, new THREE.BoxGeometry(0.008, 0.06, 0.06), watermelonStripeMat,
-        [0.16, -0.12 + i * 0.05, -0.1]);
+      addPart(root, new THREE.TorusGeometry(0.075, 0.012, 5, 12), mat(palette.stem),
+        [0, -0.05 - i * 0.04, 0.15 + i * 0.1], [1, 1, 1], [Math.PI / 2 + 0.2, 0, 0]);
+    }
+    // Almofada da coronha (fatia de melancia)
+    addPart(root, new THREE.CylinderGeometry(0.09, 0.09, 0.05, 12), watermelonRindMat,
+      [0, -0.15, 0.52], [1, 1, 1], [Math.PI / 2 + 0.2, 0, 0]);
+
+    // Maçaneta (madeira escura)
+    addPart(root, new THREE.CylinderGeometry(0.05, 0.06, 0.24, 8), darkWoodMat,
+      [0, -0.24, 0.08], [1, 1, 1], [0.4, 0, 0]);
+    addPart(root, new THREE.SphereGeometry(0.03, 6, 5), brightGoldMat, [0, -0.37, 0.13]);
+
+    // Guarda do gatilho (arco) + gatilho
+    addPart(root, new THREE.TorusGeometry(0.045, 0.012, 6, 14), darkMetalMat,
+      [0, -0.17, 0.02], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.015, 0.06, 0.015), metalMat, [0, -0.14, 0.02]);
+
+    // === ALÇA DE MIRA TRASEIRA + FRONTAL ===
+    // Traseira (anel de metal)
+    addPart(root, new THREE.TorusGeometry(0.03, 0.008, 6, 12), metalMat,
+      [0, 0.16, -0.35], [1, 1, 1], [0, 0, 0]);
+    addPart(root, new THREE.BoxGeometry(0.012, 0.08, 0.012), metalMat, [0, 0.22, -0.35]);
+    // Frontal (poste)
+    addPart(root, new THREE.BoxGeometry(0.015, 0.08, 0.015), metalMat, [0, 0.1, -0.9]);
+    addPart(root, new THREE.SphereGeometry(0.02, 6, 5), brightGoldMat, [0, 0.15, -0.9]);
+
+    // === FITA DE MUNIÇÃO (sementes penduradas na lateral) ===
+    for (let i = 0; i < 6; i++) {
+      addPart(root, new THREE.SphereGeometry(0.025, 6, 5), seedMat,
+        [0.2, -0.05 - i * 0.03, -0.3 + i * 0.06], [1, 1, 0.7]);
+      addPart(root, new THREE.CylinderGeometry(0.008, 0.008, 0.06, 4), brightGoldMat,
+        [0.19, -0.06 - i * 0.03, -0.32 + i * 0.06], [1, 1, 1], [0, 0, 0.3]);
     }
 
-    // Folhas na parte superior (mira)
+    // Folhas na parte superior (mira auxiliar)
     for (const side of [-1, 1]) {
-      addPart(root, new THREE.SphereGeometry(0.07, 8, 6), mat(palette.leafLight),
-        [side * 0.22, 0.2, -0.45], [0.4, 0.9, 1.3]);
+      addPart(root, new THREE.SphereGeometry(0.08, 8, 6), mat(palette.leafLight),
+        [side * 0.24, 0.22, -0.45], [0.4, 0.9, 1.3]);
     }
 
     // Caule no topo da melancia
-    addPart(root, new THREE.CylinderGeometry(0.03, 0.04, 0.12, 6), mat(palette.stem),
-      [0, 0.32, -0.25], [1, 1, 1], [0.2, 0, 0]);
+    addPart(root, new THREE.CylinderGeometry(0.03, 0.045, 0.14, 6), mat(palette.stem),
+      [0, 0.34, -0.25], [1, 1, 1], [0.2, 0, 0]);
+    // Folha pequena no caule
+    addPart(root, new THREE.SphereGeometry(0.06, 6, 4), mat(palette.leaf),
+      [0.06, 0.4, -0.25], [0.4, 0.15, 1.2]);
   }
 
   return root;
 }
 
-// Front (support) hand grip positions.
 const weaponGrip = {
   corn: [0, 0.02, -0.35],
   sunflower: [0, 0.02, -0.5],
@@ -628,6 +564,7 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   const stockLabel = document.querySelector("#seed-stock");
   const harvestPrompt = document.querySelector("#harvest-prompt");
   const harvestPromptText = document.querySelector("#harvest-prompt-text");
+  const scopeOverlay = document.querySelector("#scope-overlay");
 
   const growingCrops = [];
   const projectiles = [];
@@ -641,6 +578,12 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
 
   let reloadActive = false;
   let reloadProgress = 0;
+
+  // Estado do zoom da sniper (right mouse button)
+  let aiming = false;
+  const baseFov = 76;
+  const scopedFov = 26;
+  let currentFov = baseFov;
 
   const heldRoot = new THREE.Group();
   const sleeveMat = mat(0x557c54);
@@ -679,6 +622,13 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   heldPlantSlot.renderOrder = 999;
   camera.add(heldRoot);
 
+  function setAiming(v) {
+    aiming = !!v;
+  }
+  function isAiming() {
+    return aiming && selected === "sunflower";
+  }
+
   function triggerReloadAnimation() {
     reloadActive = true;
     reloadProgress = 0;
@@ -706,6 +656,7 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   function selectType(kind) {
     if (!weaponInfo[kind]) return;
     selected = kind;
+    aiming = false;
     if (nameEl) nameEl.textContent = weaponInfo[kind].name;
     if (abilityEl) abilityEl.textContent = weaponInfo[kind].ability;
     if (detailEl) detailEl.textContent = weaponInfo[kind].detail;
@@ -734,7 +685,7 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
     pickups.push({ root, kind, baseY: 0, phase: Math.random() * Math.PI * 2 });
   }
 
-  function plantCrop(x, z, kind) {
+  function plantCrop(x, z, kind, silent = false) {
     if (growingCrops.length >= 22) {
       const oldest = growingCrops.shift();
       scene.remove(oldest.group);
@@ -754,8 +705,10 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
     scene.add(group);
     growingCrops.push({ group, ring, plantModel, kind, growth: 0, ringDrawnAt: -1, matured: false });
     if (plantCountLabel) plantCountLabel.textContent = String(growingCrops.length);
-    playPlant();
-    showToast("Arma plantada — volte com E quando crescer!");
+    if (!silent) {
+      playPlant();
+      showToast("Arma plantada — volte com E quando crescer!");
+    }
   }
 
   function spawnMuzzleFlash() {
@@ -859,7 +812,19 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   function update(delta, active = false) {
     elapsed += delta;
     shotCooldown = Math.max(0, shotCooldown - delta);
-    heldRoot.visible = active;
+
+    // === Zoom da sniper (FOV lerp) ===
+    const scopedNow = isAiming();
+    const targetFov = scopedNow ? scopedFov : baseFov;
+    currentFov = THREE.MathUtils.lerp(currentFov, targetFov, 1 - Math.exp(-delta * 12));
+    if (Math.abs(camera.fov - currentFov) > 0.01) {
+      camera.fov = currentFov;
+      camera.updateProjectionMatrix();
+    }
+    if (scopeOverlay) scopeOverlay.classList.toggle("visible", scopedNow);
+
+    // Esconde a arma quando mira com a sniper (para simular a luneta)
+    heldRoot.visible = active && !scopedNow;
 
     if (reloadActive) {
       reloadProgress += delta * 2.6;
@@ -950,5 +915,9 @@ export function createSeedPlantSystem(scene, camera, showToast, addPollenCloud, 
   selectType("corn");
   updateStock();
   updateAmmoDisplay();
-  return { update, shoot, selectType, interact, getPlantCount: () => growingCrops.length };
-  }
+  return {
+    update, shoot, selectType, interact,
+    getPlantCount: () => growingCrops.length,
+    plantCrop, setAiming, isAiming,
+  };
+              }
