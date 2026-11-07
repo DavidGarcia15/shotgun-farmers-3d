@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { createCompanionSystem } from "./companions.js";
+import { createSeedPlantSystem } from "./seed-plants.js";
 
-// Farmers Field — prototype 002
+// Farmers Field — prototype 003
 // First-person farm exploration with friendly NPC companions and seedling growth.
 // The world is built from procedural geometry, so no copyrighted game assets are used.
 
@@ -413,6 +414,7 @@ function showToast(message) {
 }
 
 const companionSystem = createCompanionSystem(scene, showToast);
+const seedPlantSystem = createSeedPlantSystem(scene, camera, showToast);
 
 function lockPointer() {
   if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
@@ -447,6 +449,9 @@ document.addEventListener("mousemove", (event) => {
 
 document.addEventListener("keydown", (event) => {
   keys[event.code] = true;
+  if (event.code === "Digit1") seedPlantSystem.selectType("corn");
+  if (event.code === "Digit2") seedPlantSystem.selectType("sunflower");
+  if (event.code === "Digit3") seedPlantSystem.selectType("pumpkin");
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
   if (event.code === "Space" && grounded && isLocked) {
     verticalVelocity = 7.2;
@@ -456,6 +461,9 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keyup", (event) => { keys[event.code] = false; });
+document.addEventListener("mousedown", (event) => {
+  if (event.button === 0 && isLocked) seedPlantSystem.throwSeed();
+});
 window.addEventListener("blur", () => { for (const key of Object.keys(keys)) keys[key] = false; });
 
 function animate() {
@@ -463,6 +471,7 @@ function animate() {
   const elapsed = clock.elapsedTime;
   if (isLocked) updatePlayer(delta);
   companionSystem.update(delta, camera.position, keys, isLocked);
+  seedPlantSystem.update(delta, isLocked);
   clouds.forEach((cloud, index) => {
     cloud.position.x += delta * (0.3 + index * 0.07);
     if (cloud.position.x > 115) cloud.position.x = -115;
