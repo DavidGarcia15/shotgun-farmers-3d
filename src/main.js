@@ -3,10 +3,9 @@ import { createCompanionSystem } from "./companions.js";
 import { createSeedPlantSystem } from "./seed-plants.js";
 import { unlockAudio } from "./sound.js";
 
-// Farmers Field — prototype 005
-// First-person farm exploration with friendly NPC companions, seed-growth crops,
-// and a Shotgun-Farmers-style sow/harvest loop. The world is built from procedural
-// geometry, so no copyrighted game assets are used.
+// Farmers Field — prototype 007
+// Shotgun-Farmers-style sow/harvest loop, adapted to be nonviolent.
+// Procedural world, no copyrighted assets.
 
 const canvas = document.querySelector("#game-canvas");
 const startScreen = document.querySelector("#start-screen");
@@ -35,9 +34,7 @@ renderer.toneMappingExposure = 1.12;
 
 const clock = new THREE.Clock();
 const colliders = [];
-const crops = [];
 const clouds = [];
-const up = new THREE.Vector3(0, 1, 0);
 const keys = Object.create(null);
 let yaw = 0;
 let pitch = 0;
@@ -51,9 +48,7 @@ const material = (color, roughness = 0.9, extra = {}) =>
 
 const mats = {
   grass: material(0x78945a),
-  grassLight: material(0x8ba766),
   soil: material(0x76523b),
-  soilDark: material(0x5a402f),
   wood: material(0x8a5d38),
   woodDark: material(0x513923),
   barn: material(0xa94c36),
@@ -61,10 +56,6 @@ const mats = {
   roof: material(0x39443b),
   cream: material(0xe7d8ae),
   leaf: material(0x477b3e),
-  leafLight: material(0x78a54d),
-  corn: material(0xe8c44f),
-  pumpkin: material(0xe47d32),
-  stone: material(0x777b70),
 };
 
 function addMesh(geometry, mat, position, options = {}) {
@@ -93,7 +84,6 @@ function addGround() {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Subtle, irregular grass patches make the open land feel less like a flat test plane.
   const patchMat = new THREE.MeshStandardMaterial({ color: 0x91a96a, roughness: 1, transparent: true, opacity: 0.26 });
   for (let i = 0; i < 90; i++) {
     const x = (Math.random() - 0.5) * 185;
@@ -124,10 +114,8 @@ function addPath() {
 }
 
 function addBarn() {
-  const x = -33;
-  const z = -25;
+  const x = -33, z = -25;
   addBox([x, 5.3, z], [18, 10.6, 15], mats.barn);
-  // Front gable, built as a triangular prism.
   const gableShape = new THREE.Shape();
   gableShape.moveTo(-9, 0);
   gableShape.lineTo(9, 0);
@@ -135,7 +123,7 @@ function addBarn() {
   gableShape.closePath();
   const gableGeo = new THREE.ExtrudeGeometry(gableShape, { depth: 0.35, bevelEnabled: false });
   const gable = new THREE.Mesh(gableGeo, mats.barnLight);
-  gable.position.set(x - 0, 10.55, z + 7.5);
+  gable.position.set(x, 10.55, z + 7.5);
   gable.castShadow = true;
   scene.add(gable);
 
@@ -151,12 +139,10 @@ function addBarn() {
   addBox([x - 6.7, 7.4, z + 7.82], [0.95, 1.2, 0.1], material(0x7fb1b0));
   addBox([x + 6.7, 7.4, z + 7.82], [0.95, 1.2, 0.1], material(0x7fb1b0));
   addBox([x, 2.2, z + 7.82], [18.2, 0.35, 0.35], mats.cream);
-  // White timber braces on both front doors.
   for (const side of [-1, 1]) {
     const brace = addBox([x + side * 1.25, 6.3, z + 7.92], [0.16, 6.4, 0.16], mats.cream);
     brace.rotation.z = side * -0.36;
   }
-  // Side loft window.
   addBox([x + 9.12, 7.4, z - 1], [0.14, 2.1, 2.1], mats.cream);
   addBox([x + 9.22, 7.4, z - 1], [0.09, 1.7, 1.7], material(0x6e9b99));
   addBox([x + 9.28, 7.4, z - 1], [0.1, 0.12, 1.9], mats.cream);
@@ -179,7 +165,7 @@ function addFenceLine(start, end, fixed, axis = "x", spacing = 3) {
   for (let i = 0; i <= count; i++) {
     const along = start + (end - start) * (i / count);
     const p = axis === "x" ? [along, 0, fixed] : [fixed, 0, along];
-    addBox([p[0], 0.9, p[2]], [axis === "x" ? 0.22 : 0.22, 1.8, axis === "x" ? 0.22 : 0.22], mats.woodDark);
+    addBox([p[0], 0.9, p[2]], [0.22, 1.8, 0.22], mats.woodDark);
     for (const y of [0.55, 1.22]) {
       addBox([p[0], y, p[2]], [axis === "x" ? spacing + 0.12 : 0.16, 0.16, axis === "x" ? 0.16 : spacing + 0.12], mats.wood);
     }
@@ -200,18 +186,19 @@ function addTree(x, z, size = 1) {
     const angle = i * 2.4;
     const radius = (0.6 + (i % 2) * 0.3) * size;
     const crown = addMesh(new THREE.IcosahedronGeometry((1.55 + (i % 3) * 0.22) * size, 1),
-      material(greens[i % greens.length]), [x + Math.cos(angle) * radius, (4.9 + (i % 2) * 0.72) * size, z + Math.sin(angle) * radius]);
+      material(greens[i % greens.length]),
+      [x + Math.cos(angle) * radius, (4.9 + (i % 2) * 0.72) * size, z + Math.sin(angle) * radius]);
     crown.scale.y = 0.83;
   }
 }
 
 function addHayBale(x, y, z, rotation = 0) {
-  const bale = addMesh(new THREE.CylinderGeometry(1.05, 1.05, 1.5, 12), material(0xc1a05b), [x, y + 1.05, z],
-    { rotation: [0, 0, Math.PI / 2] });
+  const bale = addMesh(new THREE.CylinderGeometry(1.05, 1.05, 1.5, 12),
+    material(0xc1a05b), [x, y + 1.05, z], { rotation: [0, 0, Math.PI / 2] });
   bale.rotation.y = rotation;
   for (let i = -2; i <= 2; i++) {
-    const band = addMesh(new THREE.TorusGeometry(1.055, 0.025, 4, 16), material(0xe0c17b), [x + i * 0.26, y + 1.05, z],
-      { rotation: [0, 0, Math.PI / 2] });
+    const band = addMesh(new THREE.TorusGeometry(1.055, 0.025, 4, 16),
+      material(0xe0c17b), [x + i * 0.26, y + 1.05, z], { rotation: [0, 0, Math.PI / 2] });
     band.rotation.x = Math.PI / 2;
   }
 }
@@ -262,7 +249,6 @@ function addCrops() {
   stalks.castShadow = leaves.castShadow = cobs.castShadow = true;
   stalks.receiveShadow = leaves.receiveShadow = cobs.receiveShadow = true;
   scene.add(stalks, leaves, cobs);
-  crops.push({ mesh: leaves, base: leaves.instanceMatrix.array.slice(), count: leafCount });
 }
 
 function addFlowerPatch(x, z, count = 12) {
@@ -270,7 +256,8 @@ function addFlowerPatch(x, z, count = 12) {
     const px = x + (Math.random() - 0.5) * 7;
     const pz = z + (Math.random() - 0.5) * 7;
     addCylinder([px, 0.35, pz], 0.035, 0.045, 0.7, mats.leaf, 5);
-    const flower = addMesh(new THREE.SphereGeometry(0.16, 7, 5), material(i % 3 ? 0xe5c64e : 0xf2e2b6), [px, 0.72, pz]);
+    const flower = addMesh(new THREE.SphereGeometry(0.16, 7, 5),
+      material(i % 3 ? 0xe5c64e : 0xf2e2b6), [px, 0.72, pz]);
     flower.scale.set(1, 0.55, 1);
   }
 }
@@ -334,9 +321,12 @@ function addLighting() {
   sun.shadow.bias = -0.00025;
   sun.shadow.normalBias = 0.025;
   scene.add(sun);
-  const sunDisc = new THREE.Mesh(new THREE.SphereGeometry(4.5, 20, 16), new THREE.MeshBasicMaterial({ color: 0xffe8ad }));
+
+  const sunDisc = new THREE.Mesh(new THREE.SphereGeometry(4.5, 20, 16),
+    new THREE.MeshBasicMaterial({ color: 0xffe8ad }));
   sunDisc.position.set(-70, 65, -100);
   scene.add(sunDisc);
+
   const fill = new THREE.DirectionalLight(0xb5d8e2, 0.55);
   fill.position.set(45, 20, -30);
   scene.add(fill);
@@ -352,7 +342,6 @@ function buildWorld() {
   addCloud(65, 31, -35, 2.8);
 }
 
-// Player movement
 const player = {
   eyeHeight: 1.72,
   walkSpeed: 8.2,
@@ -366,8 +355,7 @@ function collidesAt(x, z) {
   for (const box of colliders) {
     const nearestX = THREE.MathUtils.clamp(x, box.minX, box.maxX);
     const nearestZ = THREE.MathUtils.clamp(z, box.minZ, box.maxZ);
-    const dx = x - nearestX;
-    const dz = z - nearestZ;
+    const dx = x - nearestX, dz = z - nearestZ;
     if (dx * dx + dz * dz < radius * radius) return true;
   }
   return false;
@@ -467,13 +455,12 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("keyup", (event) => { keys[event.code] = false; });
 document.addEventListener("mousedown", (event) => {
-  if (event.button === 0 && isLocked) seedPlantSystem.sowSeed();
+  if (event.button === 0 && isLocked) seedPlantSystem.shoot();
 });
 window.addEventListener("blur", () => { for (const key of Object.keys(keys)) keys[key] = false; });
 
 function animate() {
   const delta = Math.min(clock.getDelta(), 0.04);
-  const elapsed = clock.elapsedTime;
   if (isLocked) updatePlayer(delta);
   companionSystem.update(delta, camera.position, keys, isLocked);
   seedPlantSystem.update(delta, isLocked);
